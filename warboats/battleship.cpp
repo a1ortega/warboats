@@ -342,7 +342,7 @@ bool coordinateCheck(string position) {
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
 
-    if ((row > 9 || row < 0) || (column > 9 || column < 0)) {
+    if ((coordinate[0] > 9 || coordinate[0] < 0) || (coordinate[1] > 9 || coordinate[1] < 0)) {
             return true;
     }
     else {
@@ -350,7 +350,6 @@ bool coordinateCheck(string position) {
     }
 }
 
-/*
 //Method that checks whether or not the guess is on the map. If the guess is already on the map, it returns true
 bool guessMapCheck(string position, map* playerGuesses) {
     int coordinate[2];
@@ -362,14 +361,17 @@ bool guessMapCheck(string position, map* playerGuesses) {
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
 
-    for(int i = 0; i < 10; i++) {
-        for(int j = 0; j < 10; j++) {
-            if(playerGuesses->mapArray[coordinate[0]][coordinate[1]] == coordinate[i][j]) {
-                return true;
-            }
-        }
+    int y = coordinate[0];
+    int x = coordinate[1];
+ 
+    //Checks to see if the corresponding coordinate has anything other than a wave (meaning symbols relating to a shot/hit/sunk ship)
+    //If there is something other than a wave, then the coordinate has been guessed before
+    if(strcmp(&playerGuesses->mapArray[y][x], "~") != 0) {
+        return true;
     }
-    return false;
+    else {
+        return false;
+    }
 }
 
 
@@ -385,19 +387,19 @@ bool missedShipHitCheck(string position, map* oppositePlayerShips) {
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
 
-    for(int i = 0; i < oppositPlayerShips.length; i++) {
-        for(int j = 0; j < oppositePlayerShips[0].length; j++) {
-            if(oppositePlayerShips->mapArray[coordinate[0]][coordinate[1]] == coordinate[i][j]) {
-                //Need to figure out a way to implement the ship-shot method here (if it is the best way to go about this)
-
-                return false;
-            }
-        }
+    int y = coordinate[0];
+    int x = coordinate[1];
+ 
+    //Checks if the corresponding coordinate is a wave, if so, then the hit missed
+    if(strcmp(&oppositePlayerShips->mapArray[y][x], "~") == 0) {
+        return true;
     }
-    return true;
-}
+    else {
+    //Need to figure out a way to implement the ship-shot method here (if it is the best way to go about this)
+        return false;
+    }
+ }
 
-*/
 
 int Player::getGuessX() {
     cout << "Enter your guess for the x coordinate: " << endl;
