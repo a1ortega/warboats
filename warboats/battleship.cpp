@@ -489,7 +489,6 @@ bool coordinateCheck(string position) {
     }
 }
 
-
 //Method that checks whether or not the guess is on the map. If the guess is already on the map, it returns true
 bool guessMapCheck(string position, map* playerGuesses) {
     /* CHANGELOG
@@ -497,7 +496,8 @@ bool guessMapCheck(string position, map* playerGuesses) {
      Properly checked whether or not a ship was hit without needing to go into double for-loops
      */
     int coordinate[2];
-    char column, row;
+    char column=0;
+    char row=0;
     
     if (position.length() < 2) {
         column = position.at(0);
@@ -526,7 +526,8 @@ bool missedShipHitCheck(string position, map* oppositePlayerShips) {
      Properly checked whether or not a ship was hit without needing to go into double for-loops
      */
     int coordinate[2];
-    char column, row;
+    char column=0;
+    char row=0;
     
     if (position.length() < 2) {
         column = position.at(0);
@@ -548,25 +549,6 @@ bool missedShipHitCheck(string position, map* oppositePlayerShips) {
         //Need to figure out a way to implement the ship-shot method here (if it is the best way to go about this)
         return false;
     }
-}
-
-//DO WE NEED THESE?
-int Player::getGuessX() {
-    cout << "Enter your guess for the x coordinate: " << endl;
-    int x;
-    cin >> x;
-    
-    return x;
-}
-
-//DO WE NEED THESE?
-int Player::getGuessY() {
-    
-    cout << "Enter your guess for the y coordinate: " << endl;
-    int y;
-    cin >> y;
-    
-    return y;
 }
 
 //Method to get player name from console
