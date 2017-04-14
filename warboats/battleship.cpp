@@ -10,12 +10,17 @@
 // For differentiating between player1 and player2 screens in terminal, you can opt to ask the player to pass it to the other and
 // have a blank input through cin then clear the screen of all previous maps, etc.
 
+
+
 #ifndef map_h
 #define map_h
 
 #include "battleship.h"
 using namespace std;
 
+
+
+/*** MAIN ***/
 int main() {
     //Player player1;
     //Player player2;
@@ -60,7 +65,10 @@ int main() {
      */
     return 0;
 }
+/***********/
 
+
+//
 int printMenu() {
     
     int playerOption;
@@ -83,6 +91,7 @@ int printMenu() {
     return playerOption;
 }
 
+//
 bool validateInput(int input) {
     if (input >= 1 && input <= 4) {
         return true;
@@ -92,6 +101,7 @@ bool validateInput(int input) {
     }
 }
 
+//
 void startGame(Player* p2) {
     
     Player* p1 = new Player();
@@ -104,19 +114,19 @@ void startGame(Player* p2) {
     while(!gameOver){
         if(turnRand == 0){  //player 1 first
             if(turn % 2 == 0){  //p1 turn
-                p1->takeTurn(p2->shipMap);
+                p1->takeTurn(p1->guessMap, p2->shipMap);
             }
             else{               //AIturn
-                p2->takeTurn(p1->shipMap);
+                p2->takeTurn(p2->guessMap, p1->shipMap);
             }
             turn++;               //increment turn
         } //end of player1 first
         else{                   //AI 2 first
             if(turn % 2 == 0){  //AI turn
-                p2->takeTurn(p2->shipMap);
+                p2->takeTurn(p1->guessMap, p2->shipMap);
             }
             else{               //p1 turn
-                p1->takeTurn(p1->shipMap);
+                p1->takeTurn(p2->guessMap, p1->shipMap);
             }
             turn++;             //increment online
         }   //end of AIfirst
@@ -126,6 +136,7 @@ void startGame(Player* p2) {
     
 } //end of 1P game
 
+//
 void showCredits() {
     cout << "Evan Waxman" << endl;
     cout << "Andrew Ortega" << endl;
@@ -135,18 +146,58 @@ void showCredits() {
     cout << "Andrew Showen" << endl;
     cout << "Snoop Dogg" << endl;
 }
-////////////////////
-/// PLAYER CLASS ///
-////////////////////
 
-Ship* Player::createShip(int shipNumber, int length, map* map) {
+
+
+/*******************/
+/** PLAYER CLASS **/
+/*******************/
+
+//
+Ship* Player::createShip(int shipNumber, int length, map* map) { //Allows user to input ship and checks input
+    /* CHANGELOG
+     Added in the initial check for whether or not the position is of the right length. (This relenvace of this mainly being
+     because a position with length 1 will crash the program out of terminal) After this, it goes through ahd verifies other stipulations
+     of the coordinateCheck method. If it does fail, it outputs what the problem was to the user and continues to take input
+     */
+    
     cout << "What position do you want to put your " << length <<" length ship at? (enter a capital letter and a digit ex: D7): "<< endl;
     string position;
     cin >> position;
     
-    while(position.length() > 2 || position.length() < 2) {
-        cout << "Incorrect Coordinate Input" << endl;
+    while(position.length() > 2 || position.length() < 2 || coordinateCheck(position)) {
+        int coordinate[2];
+        char column, row;
         
+        if (position.length() > 2) {
+            cout << "Incorrect Coordinate Input (coordinate too long)" << endl;
+        }
+        else if (position.length() < 2) {
+            cout << "Incorrect Coordinate Input (coordinate too short)" << endl;
+        }
+        if (coordinateCheck(position) && position.length() == 2) {
+            column = position.at(0);
+            row = position.at(1);
+            
+            coordinate[1] = toupper(column) - 0x41;
+            coordinate[0] = row - 0x30;
+            
+            if (isalpha(position.at(0)) == 0 && isdigit(position.at(1)) == 0) {
+                cout << "Incorrect Coordinate Input (no letter in the first position, no number in the second position)" << endl;
+            }
+            else if (isalpha(position.at(0) != 0)) {
+                cout << "Incorrect Coordinate Input (no letter in the first position)" << endl;
+            }
+            else if (isdigit(position.at(1)) == 0) {
+                cout << "Incorrect Coordinate Input (no number in the second position)" << endl;
+            }
+            else if ((coordinate[0] > 9 || coordinate[0] < 0) || (coordinate[1] > 9 || coordinate[1] < 0)) {
+                cout << "Incorrect Coordinate Input (letter not found on the map)" << endl;
+            }
+            else {
+                break;
+            }
+        }
         cout << "What position do you want to put your " << length <<" length ship at? (enter a capital letter and a digit ex: D7): "<< endl;
         cin >> position;
     }
@@ -162,22 +213,21 @@ Ship* Player::createShip(int shipNumber, int length, map* map) {
         cin >> orientation;
     }
     
-    while(intersectionCheck(position, orientation, length, map) || boundaryCheck(position, orientation, length) || coordinateCheck(position)){
+    while(intersectionCheck(position, orientation, length, map) || boundaryCheck(position, orientation, length)){
         if (intersectionCheck(position, orientation, length, map)) {
             cout << "Incorrect Placement (intersection with ship)" << endl;
         }
         else if (boundaryCheck(position, orientation, length)) {
             cout << "Incorrect Placement (outside of map boundary)" << endl;
         }
-        else if (coordinateCheck(position)) {
-            cout << "Incorrect Coordinate Input" << endl;
+        else {
+            
         }
-        
         cout << "What position do you want to put your " << length <<" length ship at? (Enter a capital letter and a digit ex: 'D7'): "<< endl;
         cin >> position;
         
         while(position.length() > 2 || position.length() < 2) {
-            cout << "Incorrect Coordinate Input" << endl;
+            cout << "Incorrect Coordinate Input (coordinate too long)" << endl;
             
             cout << "What position do you want to put your " << length <<" length ship at? (Enter a capital letter and a digit ex: 'D7'): "<< endl;
             cin >> position;
@@ -211,21 +261,26 @@ void Player::initializeShips(map* playerShips, map* playerGuesses) {
         printMap(*playerShips, *playerGuesses);
     }
 }
-/*
- void Player::placeShips(Player player, map playerShipMap) {
- for(int i=1; i<6; i++) {
- player1.createShip(i, sizeArray[i-1], &player1ships);
- printMap(&player1ships, &player1guesses);
+
+
+/* void Player::placeShips(Player player, map playerShipMap) {
+     for(int i=1; i<6; i++) {
+         player1.createShip(i, sizeArray[i-1], &player1ships);
+         printMap(&player1ships, &player1guesses);
+     }
+     for(int i=1; i<6; i++) {
+         player2.createShip(i, sizeArray[i-1], &player2ships);
+         printMap(&player2ships, &player2guesses);
+     }
  }
- 
- for(int i=1; i<6; i++) {
- player2.createShip(i, sizeArray[i-1], &player2ships);
- printMap(&player2ships, &player2guesses);
- }
- } */
-void Player::takeTurn(map enemyShipMap){
+*/
+
+void Player::takeTurn(map playerGuessMap, map enemyShipMap) {
+    /* CHANGELOG
+     Added the small while loop at line 242 to ensure that the length is not below 2 before it separates the components of the string
+     */
     
-    printMap(shipMap, guessMap);
+    printMap(playerGuessMap, enemyShipMap);
     cout << "Enter a coordinate to guess (ex: 'D7'): ";
     
     string position;
@@ -233,11 +288,17 @@ void Player::takeTurn(map enemyShipMap){
     
     int coordinate[2];
     char column, row;
-    
+    while (position.length() < 2) {
+        if (position.length() < 2) {
+            cout << "Coordinate too short. Enter a coordinate to guess (ex: 'D7'): " << endl;
+            cin >> position;
+            continue;
+        }
+    }
     column = position.at(0);
     row = position.at(1);
     
-    while(position.length() > 2 || position.length() < 2) {
+    while(position.length() > 2) {
         cout << "Incorrect Coordinate Input" << endl;
         
         cout << "Enter a coordinate to guess (ex: 'D7'):  ";
@@ -256,7 +317,7 @@ void Player::takeTurn(map enemyShipMap){
             coordinate[1] = toupper(column) - 0x41;
             coordinate[0] = row - 0x30;
             
-            while (guessMap.guessCheck(coordinate) == true){
+            while (playerGuessMap.guessCheck(coordinate) == true){
                 cout << "This coordinate has already been checked. " << endl;
                 cout << "Enter a coordinate to guess (ex: 'D7'): " << endl;
                 
@@ -272,14 +333,20 @@ void Player::takeTurn(map enemyShipMap){
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
     
-    enemyShipMap.hitCheck(&guessMap, coordinate);
-    
+    enemyShipMap.hitCheck(&playerGuessMap, coordinate);
 }
 
+//
 bool boundaryCheck(string position, string orientation, int length) {
+    /* CHANGELOG
+     Added the small while loop at line 300 to ensure that the length is not below 2 before it separates the components of the string
+     */
     int coordinate[2];
     char column, row;
     
+    if (position.length() < 2) {
+        return true;
+    }
     column = position.at(0);
     row = position.at(1);
     
@@ -293,7 +360,7 @@ bool boundaryCheck(string position, string orientation, int length) {
     
     if(orientation == "left")
     {
-        if ((coordinate[1] - length) < 0)
+        if ((coordinate[1] - length + 1) < 0)
         {
             return true;
         }
@@ -304,7 +371,7 @@ bool boundaryCheck(string position, string orientation, int length) {
     }
     if(orientation == "right")
     {
-        if ((coordinate[1] + length) > 10)
+        if ((coordinate[1] + length) > 9)
         {
             return true;
         }
@@ -315,7 +382,7 @@ bool boundaryCheck(string position, string orientation, int length) {
     }
     if(orientation == "up")
     {
-        if ((coordinate[0] - length) < 0)
+        if ((coordinate[0] - length + 1) < 0)
         {
             return true;
         }
@@ -326,7 +393,7 @@ bool boundaryCheck(string position, string orientation, int length) {
     }
     if(orientation == "down")
     {
-        if ((coordinate[0] + length) > 10)
+        if ((coordinate[0] + length) > 9)
         {
             return true;
         }
@@ -339,8 +406,12 @@ bool boundaryCheck(string position, string orientation, int length) {
     }
 }
 
-//4-12-17 Added checks for the other three directions (originally only checked right)
+//
 bool intersectionCheck(string position, string orientation, int length, map *map) {
+    /* CHANGELOG
+     Edited the intersectionCheck method by including the left, down, and up as directions to check for intersection of one
+     ship object with that of another
+     */
     int coordinate[2];
     char column, row;
     
@@ -389,15 +460,18 @@ bool intersectionCheck(string position, string orientation, int length, map *map
 }
 
 //Method that returns true if a coordinate is no longer valid, but false if the coordinate is a valid option
-
-/* CHANGELOG
- Changed the rows/columns in the if-condition to properly reflect what should happen. Originally it did not take into account the
- char values being converted into int values
- */
 bool coordinateCheck(string position) {
+    /* CHANGELOG
+     After running through the edge cases, I added a check for whether or not the position string given was
+     less than length two, if there letters in the first prt, and if the resulting letter to ASCII conversion was something outside
+     of the range of the letters
+     */
     int coordinate[2];
     char column, row;
     
+    if (position.length() < 2) {
+        return true;
+    }
     column = position.at(0);
     row = position.at(1);
     
@@ -405,7 +479,10 @@ bool coordinateCheck(string position) {
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
     
-    if ((coordinate[0] > 9 || coordinate[0] < 0) || (coordinate[1] > 9 || coordinate[1] < 0)) {
+    if (isalpha(column) != 0) {
+        return true;
+    }
+    else if ((coordinate[0] > 9 || coordinate[0] < 0) || (coordinate[1] > 9 || coordinate[1] < 0)){
         return true;
     }
     else {
@@ -415,18 +492,19 @@ bool coordinateCheck(string position) {
 
 
 //Method that checks whether or not the guess is on the map. If the guess is already on the map, it returns true
-/* CHANGELOG
- Realized that the for-loops were unnecessary for the two methods and just opted to directly check the coordinate in the map array,
- methods should be fine now. The only forseeable problem may be with how the array is referenced but based on Evan's prior code,
- it should work perfectly fine. Will implement if I have time when I get home from stats discussion
- */
 bool guessMapCheck(string position, map* playerGuesses) {
+    /* CHANGELOG
+     Changed before the meeting of 4-12-17
+     Properly checked whether or not a ship was hit without needing to go into double for-loops
+     */
     int coordinate[2];
     char column, row;
     
-    column = position.at(0);
-    row = position.at(1);
-    
+    if (position.length() < 2) {
+        column = position.at(0);
+        row = position.at(1);
+        return true;
+    }
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
     int y = coordinate[0];
@@ -442,20 +520,20 @@ bool guessMapCheck(string position, map* playerGuesses) {
     }
 }
 
-
 //Method that checks to see if the coordinate missed a ship. If it misses a ship, it returns true. Otherwise, false.
-/* CHANGELOG
- Realized that the for-loops were unnecessary for the two methods and just opted to directly check the coordinate in the map array,
- methods should be fine now. The only forseeable problem may be with how the array is referenced but based on Evan's prior code,
- it should work perfectly fine. Will implement if I have time when I get home from stats discussion
- */
-
 bool missedShipHitCheck(string position, map* oppositePlayerShips) {
+    /* CHANGELOG
+     Changed before the meeting of 4-12-17
+     Properly checked whether or not a ship was hit without needing to go into double for-loops
+     */
     int coordinate[2];
     char column, row;
     
-    column = position.at(0);
-    row = position.at(1);
+    if (position.length() < 2) {
+        column = position.at(0);
+        row = position.at(1);
+        return true;
+    }
     
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
@@ -473,6 +551,7 @@ bool missedShipHitCheck(string position, map* oppositePlayerShips) {
     }
 }
 
+//DO WE NEED THESE?
 int Player::getGuessX() {
     cout << "Enter your guess for the x coordinate: " << endl;
     int x;
@@ -481,6 +560,7 @@ int Player::getGuessX() {
     return x;
 }
 
+//DO WE NEED THESE?
 int Player::getGuessY() {
     
     cout << "Enter your guess for the y coordinate: " << endl;
@@ -490,16 +570,19 @@ int Player::getGuessY() {
     return y;
 }
 
+//Method to get player name from console
 void Player::getName() {
     
     cout << "Enter your name: " << endl;
     cin >> name;
 }
 
-////////////////////
-///   AI CLASS   ///
-////////////////////
 
+/*******************/
+/**   AI CLASS   **/
+/*******************/
+
+//Allows AI to auto place ships
 Ship* AI::createShip(int shipNumber, int length, map* map) {
     
     int randX = rand() % 9 +1;
@@ -633,12 +716,12 @@ Ship* AI::createShip(int shipNumber, int length, map* map) {
     return ship;
 }
 
+//Allows player to choose AI difficulty
 void AI::setDifficulty(string difficulty) {
     this->difficulty = difficulty;
 }
 
-
-
+//Method for the computer to 'take a turn' automatically
 void AI::takeTurn(map enemyShipMap) {
     int guess[2];
     int coordinateX;
@@ -797,13 +880,15 @@ void AI::takeTurn(map enemyShipMap) {
     enemyShipMap.hitCheck(&guessMap, guess);
 }
 
+//Allows the player to set a name for the AI
 void AI::getName() {
     name = "Jonathan Liu";
 }
 
-////////////////////
-///   MAP CLASS  ///
-////////////////////
+
+/*******************/
+/**   MAP CLASS  **/
+/*******************/
 
 // Constructor for map object
 map::map() {
@@ -834,8 +919,6 @@ bool map::hitCheck(map *guessMap, int coordinate[2]) {
     }
 }
 
-
-
 // Print mapArray of map
 void printMap(map player1ships, map player1guesses) {
     cout << "   ------P1 Ships-----  -----P1 Guess------" << endl;
@@ -856,6 +939,7 @@ void printMap(map player1ships, map player1guesses) {
     }
 }
 
+//
 void placeShip(Ship *ship, map *shipMap, char counter) {
     int coordinate[2];
     for(int i=0; i<ship->length; i++) {
@@ -869,10 +953,12 @@ void placeShip(Ship *ship, map *shipMap, char counter) {
     }
 }
 
-////////////////////
-///  SHIP CLASS  ///
-////////////////////
 
+/*******************/
+/**  SHIP CLASS  **/
+/*******************/
+
+//
 Ship::Ship(int shipNumber, string position, int l, string orientation)
 {
     //Sets the length and initial chunk variable (first position) equal to the respective parameters

@@ -40,7 +40,7 @@ public:
     int getGuessY();
     void getName();
     Ship* createShip(int shipNumber, int length, map* map);
-    void takeTurn(map enemyShipMap);
+    void takeTurn(map playerGuessMap, map enemyShipMap);
     void initializeShips(map* playerShips, map* playerGuesses);
 };
 
