@@ -12,8 +12,7 @@
 
 
 
-#ifndef map_h
-#define map_h
+
 
 #include "battleship.h"
 using namespace std;
@@ -1061,5 +1060,5 @@ bool Ship::isAlive()
 
 //}
 
-#endif
+
 
