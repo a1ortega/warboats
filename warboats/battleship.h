@@ -40,8 +40,8 @@ public:
     int getGuessY();
     void getName();
     Ship* createShip(int shipNumber, int length, map* map);
-    void takeTurn(map playerGuessMap, map enemyShipMap);
-    void initializeShips(map playerShips, map playerGuesses);
+    void initializeShips();
+    void takeTurn(Player otherPlayer);
 };
 
 class AI: public Player{
@@ -62,9 +62,9 @@ bool intersectionCheck(string position, string orientation, int length, map *map
 bool boundaryCheck(string position, string orientation, int length);
 int* generateGuess(string difficulty, char** guessMap);
 
-void printMap(map shipMap, map guessMap);
+void printMap(Player p1);
 void placeShip(Ship *ship, map *shipMap, char counter);
-int printMenu();
-bool validateInput(int playerOption);
+char printMenu();
+bool validateInput(char playerOption);
 void startGame(Player* p2);
 void showCredits();
