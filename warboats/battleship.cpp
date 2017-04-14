@@ -57,15 +57,10 @@ int main() {
     cout << "Thanks for playing Warboats!" << endl;
     cout << "Press enter to exit." << endl;
     exit(9);
-    /*
-     Ship ship1(1, "D5", 5, "right");
-     placeShip(&ship1, &player1ships, '1');
-     printMap(&player1ships, &player1guesses);
-     */
+    
     return 0;
 }
 /***********/
-
 
 //
 int printMenu() {
@@ -110,6 +105,66 @@ void startGame(Player* p2) {
     int turn = 1;
     bool gameOver = false;
     int turnRand = rand()%2;
+    
+    
+    cout << endl << endl << "Player 1 Enter Ships: " << endl;
+    
+    
+    p1->initializeShips(p1->shipMap,p1->guessMap);
+    
+    cout << endl << endl << endl << endl << endl << endl << endl << "Player 2 Enter Ships: " << endl << endl << endl << endl;
+    
+    p2->initializeShips(p2->shipMap,p2->guessMap);
+    
+    
+    
+    
+    while(!gameOver){
+        if(turnRand == 0){  //player 1 first
+            if(turn % 2 == 0){  //p1 turnm
+                
+                p1->takeTurn(p1->guessMap, p2->shipMap);
+            }
+            else{               //AIturn
+                p2->takeTurn(p2->guessMap, p1->shipMap);
+            }
+            turn++;               //increment turn
+        } //end of player1 first
+        else{                   //AI 2 first
+            if(turn % 2 == 0){  //AI turn
+                p2->takeTurn(p1->guessMap, p2->shipMap);
+            }
+            else{               //p1 turn
+                p1->takeTurn(p2->guessMap, p1->shipMap);
+            }
+            turn++;             //increment online
+        }   //end of AIfirst
+    }   //end of gameActive
+    
+    
+    
+} //end of 2P game
+
+void startGameAI(Player* p2) {
+    
+    Player* p1 = new Player();
+    p1->getName();
+    p2->getName();
+    
+    int turn = 1;
+    bool gameOver = false;
+    int turnRand = rand()%2;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     while(!gameOver){
         if(turnRand == 0){  //player 1 first
             if(turn % 2 == 0){  //p1 turn
@@ -253,11 +308,11 @@ Ship* Player::createShip(int shipNumber, int length, map* map) { //Allows user t
 }
 
 //Allows each player to individually place their ships
-void Player::initializeShips(map* playerShips, map* playerGuesses) {
+void Player::initializeShips(map playerShips, map playerGuesses) {
     int sizeArray[5] = {2, 3, 3, 4, 5};
     for(int i = 1; i < 6; i++) {
-        createShip(i, sizeArray[i-1], playerShips);
-        printMap(*playerShips, *playerGuesses);
+        createShip(i, sizeArray[i-1], &playerShips);
+        printMap(playerShips, playerGuesses);
     }
 }
 
@@ -565,6 +620,10 @@ void Player::getName() {
 
 //Allows AI to auto place ships
 Ship* AI::createShip(int shipNumber, int length, map* map) {
+    /* CHANGELOG
+     *
+     *
+     */
     
     int randX = rand() % 9 +1;
     int randY = rand() % 9 +1;
@@ -699,11 +758,19 @@ Ship* AI::createShip(int shipNumber, int length, map* map) {
 
 //Allows player to choose AI difficulty
 void AI::setDifficulty(string difficulty) {
+    /* CHANGELOG
+     *
+     *
+     */
     this->difficulty = difficulty;
 }
 
 //Method for the computer to 'take a turn' automatically
 void AI::takeTurn(map enemyShipMap) {
+    /* CHANGELOG
+     *
+     *
+     */
     int guess[2];
     int coordinateX;
     int coordinateY;
@@ -863,6 +930,10 @@ void AI::takeTurn(map enemyShipMap) {
 
 //Allows the player to set a name for the AI
 void AI::getName() {
+    /* CHANGELOG
+     *
+     *
+     */
     name = "Jonathan Liu";
 }
 
@@ -873,6 +944,10 @@ void AI::getName() {
 
 // Constructor for map object
 map::map() {
+    /* CHANGELOG
+     *
+     *
+     */
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             mapArray[i][j] = '~';       // Default map element value is ~
@@ -882,6 +957,10 @@ map::map() {
 
 // Checks if coordinate was already guessed
 bool map::guessCheck(int coordinate[]) {
+    /* CHANGELOG
+     *
+     *
+     */
     if(mapArray[coordinate[0]][coordinate[1]] == 'X' || mapArray[coordinate[0]][coordinate[1]] == 'O') {    // Only other values for guess map
         return true;
     }else {
@@ -891,6 +970,12 @@ bool map::guessCheck(int coordinate[]) {
 
 // Checks if ship was hit
 bool map::hitCheck(map *guessMap, int coordinate[2]) {
+    /* CHANGELOG
+     *
+     *
+     */
+    
+    
     if(mapArray[coordinate[0]][coordinate[1]] == '~'){
         guessMap->mapArray[coordinate[0]][coordinate[1]] = 'O';     // Update guess map
         return true;
@@ -902,6 +987,10 @@ bool map::hitCheck(map *guessMap, int coordinate[2]) {
 
 // Print mapArray of map
 void printMap(map player1ships, map player1guesses) {
+    /* CHANGELOG
+     *
+     *
+     */
     cout << "   ------P1 Ships-----  -----P1 Guess------" << endl;
     cout << "   A B C D E F G H I J  A B C D E F G H I J" << endl;
     
@@ -922,6 +1011,11 @@ void printMap(map player1ships, map player1guesses) {
 
 //
 void placeShip(Ship *ship, map *shipMap, char counter) {
+    /* CHANGELOG
+     *
+     *
+     */
+    
     int coordinate[2];
     for(int i=0; i<ship->length; i++) {
         coordinate[1] = toupper(ship->chunk[i].at(0)) - 0x41;   // First argument must be a char A-J. Subtract
@@ -942,6 +1036,11 @@ void placeShip(Ship *ship, map *shipMap, char counter) {
 //
 Ship::Ship(int shipNumber, string position, int l, string orientation)
 {
+    /* CHANGELOG
+     *
+     *
+     */
+    
     //Sets the length and initial chunk variable (first position) equal to the respective parameters
     length = l;
     chunk[0] = position;

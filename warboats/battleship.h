@@ -41,7 +41,7 @@ public:
     void getName();
     Ship* createShip(int shipNumber, int length, map* map);
     void takeTurn(map playerGuessMap, map enemyShipMap);
-    void initializeShips(map* playerShips, map* playerGuesses);
+    void initializeShips(map playerShips, map playerGuesses);
 };
 
 class AI: public Player{
