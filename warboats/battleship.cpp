@@ -11,13 +11,10 @@
 // have a blank input through cin then clear the screen of all previous maps, etc.
 
 /*
- LATEST CHANGES: Evan Waxman - 4/14/17
- 
- 1. Called printMap() (line 109 in startGame()) sorry player can see map structure before
- they place ships.
- 2. Edited printMenu() and isValid() functions to have playerOption input be a char instead
- of an int. That way if a letter is entered as input in the menu option errors won't occur.
- 3. Made it so player 1 always goes first.
+ LATEST CHANGES: Evan Waxman - 4/15/17
+ 1. Implemented Marcus's showSubMenu() function.
+ 2. Cleaned up code, made it more organized.
+ 3. Got rid/commented out excess code.
  */
 
 
@@ -30,10 +27,10 @@ int main() {
     //Player player1;
     //Player player2;
     
-    bool quit = false;
+    bool endGame = false;
     char playerOption;
     
-    while(!quit) {
+    while(!endGame) {
         playerOption = printMenu();
         string difficulty = "";
         switch(playerOption) {
@@ -46,6 +43,7 @@ int main() {
             }
                 break;
             case '2':{
+                cout << "\nFor best gameplay, configure terminal window with a max height of 125." << endl << endl;
                 Player *p2 = new Player();
                 startGame(p2);
             }
@@ -55,18 +53,211 @@ int main() {
             }
                 break;
             case '4':{
-                quit = true;
+                endGame = true;
                 break;
             }
         }
     }
     cout << "Thanks for playing Warboats!" << endl;
-    //cout << "Press enter to exit." << endl;
     exit(9);
     
     return 0;
 }
 /***********/
+
+/*******************/
+/**  FUNCTIONS  **/
+/*******************/
+//Method that returns true if a coordinate is no longer valid, but false if the coordinate is a valid option
+bool coordinateCheck(string position) {
+    /* CHANGELOG
+     After running through the edge cases, I added a check for whether or not the position string given was
+     less than length two, if there letters in the first prt, and if the resulting letter to ASCII conversion was something outside
+     of the range of the letters
+     */
+    int coordinate[2];
+    char column, row;
+    
+    if (position.length() < 2) {
+        return true;
+    }
+    column = position.at(0);
+    row = position.at(1);
+    
+    //Sets the positions of the coordinate
+    coordinate[1] = toupper(column) - 0x41;
+    coordinate[0] = row - 0x30;
+    
+    if (isalpha(column) != 0) {
+        if ((coordinate[0] > 9 || coordinate[0] < 0) || (coordinate[1] > 9 || coordinate[1] < 0)){
+            return true;
+        }else {
+            return false;
+        }
+    }
+    else {
+        return true;
+    }
+}
+
+//
+bool intersectionCheck(string position, string orientation, int length, map *map) {
+    /* CHANGELOG
+     Edited the intersectionCheck method by including the left, down, and up as directions to check for intersection of one
+     ship object with that of another
+     */
+    int coordinate[2];
+    char column, row;
+    
+    column = position.at(0);
+    row = position.at(1);
+    
+    coordinate[1] = toupper(column) - 0x41;   // First argument must be a char A-J. Subtract
+    // 0x41 to get int value for array indexing.
+    // Refer to ASCII table.
+    coordinate[0] = row - 0x30;    // Second argument must be a char 1-10. Subtract
+    // 0x31 to get int value for array indexing.
+    // Refer to ASCII table.
+    if (orientation == "right") {
+        for(int i=0; i<length; i++) {
+            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
+                return true;
+            }
+            coordinate[1]++;
+        }
+    }
+    if (orientation == "left") {
+        for(int i=0; i<length; i++) {
+            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
+                return true;
+            }
+            coordinate[1]--;
+        }
+    }
+    if (orientation == "down") {
+        for(int i=0; i<length; i++) {
+            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
+                return true;
+            }
+            coordinate[0]++;
+        }
+    }
+    if (orientation == "up") {
+        for(int i=0; i<length; i++) {
+            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
+                return true;
+            }
+            coordinate[0]--;
+        }
+    }
+    return false;
+}
+
+//
+bool boundaryCheck(string position, string orientation, int length) {
+    /* CHANGELOG
+     Added the small while loop at line 300 to ensure that the length is not below 2 before it separates the components of the string
+     */
+    int coordinate[2];
+    char column, row;
+    
+    if (position.length() < 2) {
+        return true;
+    }
+    column = position.at(0);
+    row = position.at(1);
+    
+    coordinate[1] = toupper(column) - 0x41;   // First argument must be a char A-J. Subtract
+    // 0x41 to get int value for array indexing.
+    // Refer to ASCII table.
+    coordinate[0] = row - 0x30;    // Second argument must be a char 1-10. Subtract
+    // 0x31 to get int value for array indexing.
+    // Refer to ASCII table.
+    
+    
+    if(orientation == "left")
+    {
+        if ((coordinate[1] - length + 1) < 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    if(orientation == "right")
+    {
+        if ((coordinate[1] + length - 1) > 9)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    if(orientation == "up")
+    {
+        if ((coordinate[0] - length + 1) < 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    if(orientation == "down")
+    {
+        if ((coordinate[0] + length - 1) > 9)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }else {
+        return true;
+    }
+}
+
+// Print mapArray of map
+void printMap(Player p1) {
+    
+    cout << p1.name << endl;
+    cout << "   -------Ships-------  -------Guess-------" << endl;
+    cout << "   A B C D E F G H I J  A B C D E F G H I J" << endl;
+    
+    char row_count = '0';
+    for (int i = 0; i < p1.guessMap.size; i++) {
+        cout << row_count << "  ";
+        for (int j = 0; j < p1.guessMap.size; j++) {
+            cout << p1.shipMap.mapArray[i][j] << " " ;
+        }
+        cout << " ";
+        for(int j=0; j< p1.guessMap.size; j++){
+            cout << p1.guessMap.mapArray[i][j]<< " ";
+        }
+        cout << endl;
+        row_count++;
+    }
+}
+
+//
+void placeShip(Ship *ship, map *shipMap, char counter) {
+    int coordinate[2];
+    for(int i=0; i<ship->length; i++) {
+        coordinate[1] = toupper(ship->chunk[i].at(0)) - 0x41;   // First argument must be a char A-J. Subtract
+        // 0x41 to get int value for array indexing.
+        // Refer to ASCII table.
+        coordinate[0] = ship->chunk[i].at(1) - 0x30;    // Second argument must be a char 1-10. Subtract
+        // 0x31 to get int value for array indexing.
+        // Refer to ASCII table.
+        shipMap->mapArray[coordinate[0]][coordinate[1]] = counter + 0x30;
+    }
+}
 
 //
 char printMenu() {
@@ -104,7 +295,6 @@ bool validateInput(char input) {
 //
 void startGame(Player* p2) {
     
-    int selection;
     Player* p1 = new Player();
     p1->getName();
     p2->getName();
@@ -115,47 +305,80 @@ void startGame(Player* p2) {
     //int turnRand = rand()%2;
     int turn = 0;
     
+    printMap(*p1);
+    
     cout << endl << "Player 1 Enter Ships: " << endl;
     p1->initializeShips();
     
     cout << endl << endl << "Player 2 Enter Ships: " << endl;
     p2->initializeShips();
     
-    cout << endl << endl << p1->name << " start game!" << endl;
+    cout << endl << endl << "Battle to the death. Go!" << endl;
     while(!gameOver){
         if(turn == 0){  //p1 turn
-            selection = showSubMenu();
-            if(selection == 1) {
-                printMap(*p1);
+            cout << "\n" << p1->name << " make your move." << endl;
+            switch (showSubMenu()) {
+                case 1:
+                    printMap(*p1);
+                    p1->takeTurn(p2);
+                    break;
+                case 2:
+                    p1->takeTurn(p2);
+                    break;
+                case 3:
+                    cout << "Thanks for playing Warboats!" << endl;
+                    exit(9);
+                    break;
+                default:
+                    cout << "Invalid selection, try again." << endl;
+                    turn--;
+                    break;
             }
-            if(selection == 2) {
-                p1->takeTurn(*p2);
-                turn++;
-            }
-            if(selection == 3) {
-                gameOver = endGame(p2->name);
-            }
-            
+            turn++;
         }
         else{               //AIturn
-            selection = showSubMenu();
-            if(selection == 1) {
-                printMap(*p2);
+            cout << "\n" << p2->name << " make your move." << endl;
+            switch (showSubMenu()) {
+                case 1:
+                    printMap(*p2);
+                    p2->takeTurn(p1);
+                    break;
+                case 2:
+                    p2->takeTurn(p1);
+                    break;
+                case 3:
+                    cout << "Thanks for playing Warboats!" << endl;
+                    exit(9);
+                    break;
+                default:
+                    cout << "Invalid selection, try again." << endl;
+                    turn--;
+                    break;
             }
-            if(selection == 2) {
-                p2->takeTurn(*p1);
-                turn--;
-            }
-            if(selection == 3) {
-                gameOver = endGame(p1->name);
-            }
+            turn--;
         }
     }
 } //end of 2P game
 
+//
+void showCredits() {
+    cout << endl;
+    cout << "Warboats contributors:" << endl;
+    cout << "Evan Waxman" << endl;
+    cout << "Andrew Ortega" << endl;
+    cout << "Marcus Mills" << endl;
+    cout << "Adam Hochberger" << endl;
+    cout << "Victor Fan" << endl;
+    cout << "Andrew Showen" << endl;
+    cout << "Snoop Dogg" << endl;
+    cout << endl;
+}
+
+//
 int showSubMenu() {
     int selection;
-    cout << "\n1. Show Map" << endl;
+    
+    cout << "1. Show Map" << endl;
     cout << "2. Take Turn" << endl;
     cout << "3. Give Up" << endl;
     cin >> selection;
@@ -165,12 +388,6 @@ int showSubMenu() {
         selection = showSubMenu();
     }
     return selection;
-}
-
-bool endGame(string winner) {
-    cout << winner << " wins! Returning to main menu." << endl;
-    return true;
-    
 }
 
 void startGameAI(Player* p2) {
@@ -186,19 +403,19 @@ void startGameAI(Player* p2) {
     while(!gameOver){
         if(turnRand == 0){  //player 1 first
             if(turn % 2 == 0){  //p1 turn
-                p1->takeTurn(*p2);
+                p1->takeTurn(p2);
             }
             else{               //AIturn
-                p2->takeTurn(*p1);
+                p2->takeTurn(p1);
             }
             turn++;               //increment turn
         } //end of player1 first
         else{                   //AI 2 first
             if(turn % 2 == 0){  //AI turn
-                p2->takeTurn(*p1);
+                p2->takeTurn(p1);
             }
             else{               //p1 turn
-                p1->takeTurn(*p2);
+                p1->takeTurn(p2);
             }
             turn++;             //increment online
         }   //end of AIfirst
@@ -208,19 +425,6 @@ void startGameAI(Player* p2) {
     
 } //end of 1P game
 
-//
-void showCredits() {
-    cout << endl;
-    cout << "Warboats contributors:" << endl;
-    cout << "Evan Waxman" << endl;
-    cout << "Andrew Ortega" << endl;
-    cout << "Marcus Mills" << endl;
-    cout << "Adam Hochberger" << endl;
-    cout << "Victor Fan" << endl;
-    cout << "Andrew Showen" << endl;
-    cout << "Snoop Dogg" << endl;
-    cout << endl;
-}
 
 
 
@@ -318,10 +522,36 @@ Ship* Player::createShip(int shipNumber, int length, map* map) { //Allows user t
         
     }
     
-    Ship* ship = new Ship(shipNumber, position, length, orientation);
-    placeShip(ship, map, shipNumber);
-    
-    return ship;
+    switch (shipNumber) {
+        case 1:
+            ship1 = new Ship(shipNumber, position, length, orientation);
+            placeShip(ship1, map, shipNumber);
+            return ship1;
+            break;
+        case 2:
+            ship2 = new Ship(shipNumber, position, length, orientation);
+            placeShip(ship2, map, shipNumber);
+            return ship2;
+            break;
+        case 3:
+            ship3 = new Ship(shipNumber, position, length, orientation);
+            placeShip(ship3, map, shipNumber);
+            return ship3;
+            break;
+        case 4:
+            ship4 = new Ship(shipNumber, position, length, orientation);
+            placeShip(ship4, map, shipNumber);
+            return ship4;
+            break;
+        case 5:
+            ship5 = new Ship(shipNumber, position, length, orientation);
+            placeShip(ship5, map, shipNumber);
+            return ship5;
+            break;
+        default:
+            return ship1;
+            break;
+    }
 }
 
 //Allows each player to individually place their ships
@@ -346,12 +576,12 @@ void Player::initializeShips() {
  }
  */
 
-void Player::takeTurn(Player otherPlayer) {
+void Player::takeTurn(Player* otherPlayer) {
     /* CHANGELOG
      Added the small while loop at line 242 to ensure that the length is not below 2 before it separates the components of the string
      */
     
-    printMap(*this);
+    //printMap(*this);
     cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
     
     string position;
@@ -386,7 +616,7 @@ void Player::takeTurn(Player otherPlayer) {
             coordinate[1] = toupper(column) - 0x41;
             coordinate[0] = row - 0x30;
             
-            while (this->guessMap.guessCheck(coordinate) == true){
+            while (this->guessCheck(coordinate) == true){
                 cout << "This coordinate has already been checked." << endl;
                 cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
                 
@@ -402,228 +632,13 @@ void Player::takeTurn(Player otherPlayer) {
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
     
-    if(otherPlayer.shipMap.hitCheck(&this->guessMap, coordinate)) {
-        cout << "You missed :'(" << endl;
+    if(otherPlayer->hitCheck(this, coordinate)) {
+        cout << "You missed :'(" << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl;
     }else {
-        cout << "YOU GOT A HIT!!" << endl;
+        cout << "YOU GOT A HIT!!" << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl;
     }
 }
 
-//
-bool boundaryCheck(string position, string orientation, int length) {
-    /* CHANGELOG
-     Added the small while loop at line 300 to ensure that the length is not below 2 before it separates the components of the string
-     */
-    int coordinate[2];
-    char column, row;
-    
-    if (position.length() < 2) {
-        return true;
-    }
-    column = position.at(0);
-    row = position.at(1);
-    
-    coordinate[1] = toupper(column) - 0x41;   // First argument must be a char A-J. Subtract
-    // 0x41 to get int value for array indexing.
-    // Refer to ASCII table.
-    coordinate[0] = row - 0x30;    // Second argument must be a char 1-10. Subtract
-    // 0x31 to get int value for array indexing.
-    // Refer to ASCII table.
-    
-    
-    if(orientation == "left")
-    {
-        if ((coordinate[1] - length + 1) < 0)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    if(orientation == "right")
-    {
-        if ((coordinate[1] + length - 1) > 9)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    if(orientation == "up")
-    {
-        if ((coordinate[0] - length + 1) < 0)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    if(orientation == "down")
-    {
-        if ((coordinate[0] + length - 1) > 9)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }else {
-        return true;
-    }
-}
-
-//
-bool intersectionCheck(string position, string orientation, int length, map *map) {
-    /* CHANGELOG
-     Edited the intersectionCheck method by including the left, down, and up as directions to check for intersection of one
-     ship object with that of another
-     */
-    int coordinate[2];
-    char column, row;
-    
-    column = position.at(0);
-    row = position.at(1);
-    
-    coordinate[1] = toupper(column) - 0x41;   // First argument must be a char A-J. Subtract
-    // 0x41 to get int value for array indexing.
-    // Refer to ASCII table.
-    coordinate[0] = row - 0x30;    // Second argument must be a char 1-10. Subtract
-    // 0x31 to get int value for array indexing.
-    // Refer to ASCII table.
-    if (orientation == "right") {
-        for(int i=0; i<length; i++) {
-            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
-                return true;
-            }
-            coordinate[1]++;
-        }
-    }
-    if (orientation == "left") {
-        for(int i=0; i<length; i++) {
-            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
-                return true;
-            }
-            coordinate[1]--;
-        }
-    }
-    if (orientation == "down") {
-        for(int i=0; i<length; i++) {
-            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
-                return true;
-            }
-            coordinate[0]++;
-        }
-    }
-    if (orientation == "up") {
-        for(int i=0; i<length; i++) {
-            if(map->mapArray[coordinate[0]][coordinate[1]] != '~') {
-                return true;
-            }
-            coordinate[0]--;
-        }
-    }
-    return false;
-}
-
-//Method that returns true if a coordinate is no longer valid, but false if the coordinate is a valid option
-bool coordinateCheck(string position) {
-    /* CHANGELOG
-     After running through the edge cases, I added a check for whether or not the position string given was
-     less than length two, if there letters in the first prt, and if the resulting letter to ASCII conversion was something outside
-     of the range of the letters
-     */
-    int coordinate[2];
-    char column, row;
-    
-    if (position.length() < 2) {
-        return true;
-    }
-    column = position.at(0);
-    row = position.at(1);
-    
-    //Sets the positions of the coordinate
-    coordinate[1] = toupper(column) - 0x41;
-    coordinate[0] = row - 0x30;
-    
-    if (isalpha(column) != 0) {
-        return true;
-    }
-    else if ((coordinate[0] > 9 || coordinate[0] < 0) || (coordinate[1] > 9 || coordinate[1] < 0)){
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-//Method that checks whether or not the guess is on the map. If the guess is already on the map, it returns true
-bool guessMapCheck(string position, map* playerGuesses) {
-    /* CHANGELOG
-     Changed before the meeting of 4-12-17
-     Properly checked whether or not a ship was hit without needing to go into double for-loops
-     */
-    int coordinate[2];
-    char column=0;
-    char row=0;
-    
-    if (position.length() < 2) {
-        column = position.at(0);
-        row = position.at(1);
-        return true;
-    }
-    coordinate[1] = toupper(column) - 0x41;
-    coordinate[0] = row - 0x30;
-    int y = coordinate[0];
-    int x = coordinate[1];
-    
-    //Checks to see if the corresponding coordinate has anything other than a wave (meaning symbols relating to a shot/hit/sunk ship)
-    //If there is something other than a wave, then the coordinate has been guessed before
-    if((strcmp(&playerGuesses->mapArray[y][x], "X") == 0) || (strcmp(&playerGuesses->mapArray[y][x], "O") == 0)){
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-//Method that checks to see if the coordinate missed a ship. If it misses a ship, it returns true. Otherwise, false.
-bool missedShipHitCheck(string position, map* oppositePlayerShips) {
-    /* CHANGELOG
-     Changed before the meeting of 4-12-17
-     Properly checked whether or not a ship was hit without needing to go into double for-loops
-     */
-    int coordinate[2];
-    char column=0;
-    char row=0;
-    
-    if (position.length() < 2) {
-        column = position.at(0);
-        row = position.at(1);
-        return true;
-    }
-    
-    coordinate[1] = toupper(column) - 0x41;
-    coordinate[0] = row - 0x30;
-    
-    int y = coordinate[0];
-    int x = coordinate[1];
-    
-    //Checks if the corresponding coordinate is a wave, if so, then the hit missed
-    if((strcmp(&oppositePlayerShips->mapArray[y][x], "~") == 0)) {
-        return true;
-    }
-    else {
-        //Need to figure out a way to implement the ship-shot method here (if it is the best way to go about this)
-        return false;
-    }
-}
 
 //Method to get player name from console
 void Player::getName() {
@@ -776,164 +791,167 @@ void AI::setDifficulty(string difficulty) {
     this->difficulty = difficulty;
 }
 
-//Method for the computer to 'take a turn' automatically
-void AI::takeTurn(map enemyShipMap) {
-    int guess[2];
-    int coordinateX;
-    int coordinateY;
-    
-    if (difficulty == "Easy") {
-        coordinateX = rand() % 10;
-        coordinateY = rand() % 10;
-        while (guessMap.mapArray[coordinateX][coordinateY] != '~') {
-            coordinateX = rand() % 10;
-            coordinateY = rand() % 10;
-        }
-        guess[0] = coordinateX;
-        guess[1] = coordinateY;
-        
-    }
-    if (difficulty == "Medium") {
-        int potentialList[15][2] = {};
-        int c = 0;
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
-                if (guessMap.mapArray[i][j] == '*') {
-                    if (guessMap.mapArray[i][j + 1] == '~') {
-                        potentialList[c][0] = i;
-                        potentialList[c][1] = j + 1;
-                        c++;
-                    }
-                    if (guessMap.mapArray[i][j - 1] == '~') {
-                        potentialList[c][0] = i;
-                        potentialList[c][1] = j - 1;
-                        c++;
-                    }
-                    if (guessMap.mapArray[i + 1][j] == '~') {
-                        potentialList[c][0] = i + 1;
-                        potentialList[c][1] = j;
-                        c++;
-                    }
-                    if (guessMap.mapArray[i - 1][j] == '~') {
-                        potentialList[c][0] = i - 1;
-                        potentialList[c][1] = j;
-                        c++;
-                    }
-                    
-                }
-            }
-        }
-        
-        
-        if (potentialList[0][0] == 0) {
-            coordinateX = rand() % 10;
-            coordinateY = rand() % 10;
-            while (guessMap.mapArray[coordinateX][coordinateY] != '~') {
-                coordinateX = rand() % 10;
-                coordinateY = rand() % 10;
-            }
-            guess[0] = coordinateX;
-            guess[1] = coordinateY;
-            
-        }
-        else {
-            int counter=0;
-            for (int k = 0; k <= 14; k++) {
-                if (potentialList[k][0] != 0) {
-                    counter++;
-                }
-            }
-            int q = rand() % counter;
-            guess[0] = potentialList[q][0];
-            guess[1] = potentialList[q][1];
-        }
-    }
-    if (difficulty == "Hard") {
-        int potentialList[15][2];
-        int hiPotentialList[15][2];
-        int c = 0;
-        int d = 0;
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j <10; j++) {
-                if (guessMap.mapArray[i][j] == '*') {
-                    if (guessMap.mapArray[i][j + 1] == '~') {
-                        potentialList[c][0] = i;
-                        potentialList[c][1] = j + 1;
-                        c++;
-                    }
-                    if (guessMap.mapArray[i][j - 1] == '~') {
-                        potentialList[c][0] = i;
-                        potentialList[c][1] = j - 1;
-                        c++;
-                    }
-                    if (guessMap.mapArray[i + 1][j] == '~') {
-                        potentialList[c][0] = i + 1;
-                        potentialList[c][1] = j;
-                        c++;
-                    }
-                    if (guessMap.mapArray[i - 1][j] == '~') {
-                        potentialList[c][0] = i - 1;
-                        potentialList[c][1] = j;
-                        c++;
-                    }
-                    
-                    
-                    if (guessMap.mapArray[i][j + 1] == '*') {
-                        hiPotentialList[c][0] = i;
-                        hiPotentialList[c][1] = j - 1;
-                        d++;
-                    }
-                    if (guessMap.mapArray[i][j - 1] == '*') {
-                        hiPotentialList[c][0] = i;
-                        hiPotentialList[c][1] = j + 1;
-                        d++;
-                    }
-                    if (guessMap.mapArray[i + 1][j] == '*') {
-                        hiPotentialList[c][0] = i - 1;
-                        hiPotentialList[c][1] = j;
-                        d++;
-                    }
-                    if (guessMap.mapArray[i - 1][j] == '*') {
-                        hiPotentialList[c][0] = i + 1;
-                        hiPotentialList[c][1] = j;
-                        d++;
-                    }
-                    
-                }
-            }
-        }
-        if (potentialList[0][0] == 0 && hiPotentialList[0][0] == 0) {
-            coordinateX = rand() % 10;
-            coordinateY = rand() % 10;
-            while (guessMap.mapArray[coordinateX][coordinateY] != '~'&& coordinateX + coordinateY % 2 != 0) {
-                coordinateX = rand() % 10;
-                coordinateY = rand() % 10;
-            }
-            guess[0] = coordinateX;
-            guess[1] = coordinateY;
-            
-        }
-        else if (hiPotentialList[0][0] != 0) {
-            guess[0] = hiPotentialList[0][0];
-            guess[1] = hiPotentialList[0][1];
-        }
-        
-        else {
-            int counter=0;
-            for (int k = 0; k <= 14; k++) {
-                if (potentialList[k][0] != 0) {
-                    counter++;
-                }
-            }
-            int q = rand() % counter;
-            guess[0] = potentialList[q][0];
-            guess[1] = potentialList[q][1];
-            
-            
-        }
-    }
-    enemyShipMap.hitCheck(&guessMap, guess);
-}
+/*
+ //Method for the computer to 'take a turn' automatically
+ void AI::takeTurn(map enemyShipMap) {
+ int guess[2];
+ int coordinateX;
+ int coordinateY;
+ 
+ if (difficulty == "Easy") {
+ coordinateX = rand() % 10;
+ coordinateY = rand() % 10;
+ while (guessMap.mapArray[coordinateX][coordinateY] != '~') {
+ coordinateX = rand() % 10;
+ coordinateY = rand() % 10;
+ }
+ guess[0] = coordinateX;
+ guess[1] = coordinateY;
+ 
+ }
+ if (difficulty == "Medium") {
+ int potentialList[15][2] = {};
+ int c = 0;
+ for (int i = 0; i < 10; i++) {
+ for (int j = 0; j < 10; j++) {
+ if (guessMap.mapArray[i][j] == '*') {
+ if (guessMap.mapArray[i][j + 1] == '~') {
+ potentialList[c][0] = i;
+ potentialList[c][1] = j + 1;
+ c++;
+ }
+ if (guessMap.mapArray[i][j - 1] == '~') {
+ potentialList[c][0] = i;
+ potentialList[c][1] = j - 1;
+ c++;
+ }
+ if (guessMap.mapArray[i + 1][j] == '~') {
+ potentialList[c][0] = i + 1;
+ potentialList[c][1] = j;
+ c++;
+ }
+ if (guessMap.mapArray[i - 1][j] == '~') {
+ potentialList[c][0] = i - 1;
+ potentialList[c][1] = j;
+ c++;
+ }
+ 
+ }
+ }
+ }
+ 
+ 
+ if (potentialList[0][0] == 0) {
+ coordinateX = rand() % 10;
+ coordinateY = rand() % 10;
+ while (guessMap.mapArray[coordinateX][coordinateY] != '~') {
+ coordinateX = rand() % 10;
+ coordinateY = rand() % 10;
+ }
+ guess[0] = coordinateX;
+ guess[1] = coordinateY;
+ 
+ }
+ else {
+ int counter=0;
+ for (int k = 0; k <= 14; k++) {
+ if (potentialList[k][0] != 0) {
+ counter++;
+ }
+ }
+ int q = rand() % counter;
+ guess[0] = potentialList[q][0];
+ guess[1] = potentialList[q][1];
+ }
+ }
+ if (difficulty == "Hard") {
+ int potentialList[15][2];
+ int hiPotentialList[15][2];
+ int c = 0;
+ int d = 0;
+ for (int i = 0; i < 10; i++) {
+ for (int j = 0; j <10; j++) {
+ if (guessMap.mapArray[i][j] == '*') {
+ if (guessMap.mapArray[i][j + 1] == '~') {
+ potentialList[c][0] = i;
+ potentialList[c][1] = j + 1;
+ c++;
+ }
+ if (guessMap.mapArray[i][j - 1] == '~') {
+ potentialList[c][0] = i;
+ potentialList[c][1] = j - 1;
+ c++;
+ }
+ if (guessMap.mapArray[i + 1][j] == '~') {
+ potentialList[c][0] = i + 1;
+ potentialList[c][1] = j;
+ c++;
+ }
+ if (guessMap.mapArray[i - 1][j] == '~') {
+ potentialList[c][0] = i - 1;
+ potentialList[c][1] = j;
+ c++;
+ }
+ 
+ 
+ if (guessMap.mapArray[i][j + 1] == '*') {
+ hiPotentialList[c][0] = i;
+ hiPotentialList[c][1] = j - 1;
+ d++;
+ }
+ if (guessMap.mapArray[i][j - 1] == '*') {
+ hiPotentialList[c][0] = i;
+ hiPotentialList[c][1] = j + 1;
+ d++;
+ }
+ if (guessMap.mapArray[i + 1][j] == '*') {
+ hiPotentialList[c][0] = i - 1;
+ hiPotentialList[c][1] = j;
+ d++;
+ }
+ if (guessMap.mapArray[i - 1][j] == '*') {
+ hiPotentialList[c][0] = i + 1;
+ hiPotentialList[c][1] = j;
+ d++;
+ }
+ 
+ }
+ }
+ }
+ if (potentialList[0][0] == 0 && hiPotentialList[0][0] == 0) {
+ coordinateX = rand() % 10;
+ coordinateY = rand() % 10;
+ while (guessMap.mapArray[coordinateX][coordinateY] != '~'&& coordinateX + coordinateY % 2 != 0) {
+ coordinateX = rand() % 10;
+ coordinateY = rand() % 10;
+ }
+ guess[0] = coordinateX;
+ guess[1] = coordinateY;
+ 
+ }
+ else if (hiPotentialList[0][0] != 0) {
+ guess[0] = hiPotentialList[0][0];
+ guess[1] = hiPotentialList[0][1];
+ }
+ 
+ else {
+ int counter=0;
+ for (int k = 0; k <= 14; k++) {
+ if (potentialList[k][0] != 0) {
+ counter++;
+ }
+ }
+ int q = rand() % counter;
+ guess[0] = potentialList[q][0];
+ guess[1] = potentialList[q][1];
+ 
+ 
+ }
+ }
+ enemyShipMap.hitCheck(&guessMap, guess);
+ }
+ */
+
 
 //Allows the player to set a name for the AI
 void AI::getName() {
@@ -955,8 +973,8 @@ map::map() {
 }
 
 // Checks if coordinate was already guessed
-bool map::guessCheck(int coordinate[]) {
-    if(mapArray[coordinate[0]][coordinate[1]] == 'X' || mapArray[coordinate[0]][coordinate[1]] == 'O') {    // Only other values for guess map
+bool Player::guessCheck(int coordinate[]) {
+    if(guessMap.mapArray[coordinate[0]][coordinate[1]] == 'X' || guessMap.mapArray[coordinate[0]][coordinate[1]] == 'O') {    // Only other values for guess map
         return true;
     }else {
         return false;
@@ -964,51 +982,17 @@ bool map::guessCheck(int coordinate[]) {
 }
 
 // Checks if ship was hit
-bool map::hitCheck(map *guessMap, int coordinate[2]) {
-    if(mapArray[coordinate[0]][coordinate[1]] == '~'){
-        guessMap->mapArray[coordinate[0]][coordinate[1]] = 'O';     // Update guess map
+bool Player::hitCheck(Player* otherPlayer, int coordinate[2]) {
+    if(this->shipMap.mapArray[coordinate[0]][coordinate[1]] == '~'){
+        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'O';     // Update guess map
         return true;
     }else {
-        guessMap->mapArray[coordinate[0]][coordinate[1]] = 'X';     // Update guess map
+        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'X';     // Update guess map
+        shipMap.mapArray[coordinate[0]][coordinate[1]] =  'X';
         return false;
     }
 }
 
-// Print mapArray of map
-void printMap(Player p1) {
-    
-    cout << p1.name << endl;
-    cout << "   -------Ships-------  -------Guess-------" << endl;
-    cout << "   A B C D E F G H I J  A B C D E F G H I J" << endl;
-    
-    char row_count = '0';
-    for (int i = 0; i < p1.guessMap.size; i++) {
-        cout << row_count << "  ";
-        for (int j = 0; j < p1.guessMap.size; j++) {
-            cout << p1.shipMap.mapArray[i][j] << " " ;
-        }
-        cout << " ";
-        for(int j=0; j< p1.guessMap.size; j++){
-            cout << p1.guessMap.mapArray[i][j]<< " ";
-        }
-        cout << endl;
-        row_count++;
-    }
-}
-
-//
-void placeShip(Ship *ship, map *shipMap, char counter) {
-    int coordinate[2];
-    for(int i=0; i<ship->length; i++) {
-        coordinate[1] = toupper(ship->chunk[i].at(0)) - 0x41;   // First argument must be a char A-J. Subtract
-        // 0x41 to get int value for array indexing.
-        // Refer to ASCII table.
-        coordinate[0] = ship->chunk[i].at(1) - 0x30;    // Second argument must be a char 1-10. Subtract
-        // 0x31 to get int value for array indexing.
-        // Refer to ASCII table.
-        shipMap->mapArray[coordinate[0]][coordinate[1]] = counter + 0x30;
-    }
-}
 
 
 /*******************/
@@ -1114,6 +1098,6 @@ bool Ship::isAlive()
         return true;
 }
 
-//int* generateGuess(string difficulty, char** guessMap) {
 
-//}
+
+
