@@ -30,10 +30,10 @@ int main() {
     //Player player1;
     //Player player2;
     
-    bool endGame = false;
+    bool quit = false;
     char playerOption;
     
-    while(!endGame) {
+    while(!quit) {
         playerOption = printMenu();
         string difficulty = "";
         switch(playerOption) {
@@ -55,7 +55,7 @@ int main() {
             }
                 break;
             case '4':{
-                endGame = true;
+                quit = true;
                 break;
             }
         }
@@ -104,6 +104,7 @@ bool validateInput(char input) {
 //
 void startGame(Player* p2) {
     
+    int selection;
     Player* p1 = new Player();
     p1->getName();
     p2->getName();
@@ -114,8 +115,6 @@ void startGame(Player* p2) {
     //int turnRand = rand()%2;
     int turn = 0;
     
-    printMap(*p1);
-    
     cout << endl << "Player 1 Enter Ships: " << endl;
     p1->initializeShips();
     
@@ -125,15 +124,54 @@ void startGame(Player* p2) {
     cout << endl << endl << p1->name << " start game!" << endl;
     while(!gameOver){
         if(turn == 0){  //p1 turn
-            p1->takeTurn(*p2);
-            turn++;
+            selection = showSubMenu();
+            if(selection == 1) {
+                printMap(*p1);
+            }
+            if(selection == 2) {
+                p1->takeTurn(*p2);
+                turn++;
+            }
+            if(selection == 3) {
+                gameOver = endGame(p2->name);
+            }
+            
         }
         else{               //AIturn
-            p2->takeTurn(*p1);
-            turn--;
+            selection = showSubMenu();
+            if(selection == 1) {
+                printMap(*p2);
+            }
+            if(selection == 2) {
+                p2->takeTurn(*p1);
+                turn--;
+            }
+            if(selection == 3) {
+                gameOver = endGame(p1->name);
+            }
         }
     }
 } //end of 2P game
+
+int showSubMenu() {
+    int selection;
+    cout << "\n1. Show Map" << endl;
+    cout << "2. Take Turn" << endl;
+    cout << "3. Give Up" << endl;
+    cin >> selection;
+    cout << endl;
+    if(selection < 1 || selection > 3) {
+        cout << "Invalid selection!" << endl;
+        selection = showSubMenu();
+    }
+    return selection;
+}
+
+bool endGame(string winner) {
+    cout << winner << " wins! Returning to main menu." << endl;
+    return true;
+    
+}
 
 void startGameAI(Player* p2) {
     
@@ -1079,8 +1117,3 @@ bool Ship::isAlive()
 //int* generateGuess(string difficulty, char** guessMap) {
 
 //}
-
-
-
-
-

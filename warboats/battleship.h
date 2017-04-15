@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <cstring>
 
 using namespace std;
 
@@ -62,6 +63,8 @@ bool intersectionCheck(string position, string orientation, int length, map *map
 bool boundaryCheck(string position, string orientation, int length);
 int* generateGuess(string difficulty, char** guessMap);
 
+bool endGame(string winner);
+int showSubMenu();
 void printMap(Player p1);
 void placeShip(Ship *ship, map *shipMap, char counter);
 char printMenu();
