@@ -39,7 +39,7 @@ public:
     void getName();
     Ship* createShip(int shipNumber, int length, map* map);
     void initializeShips();
-    void takeTurn(Player* otherPlayer);
+    bool takeTurn(Player* otherPlayer);
     bool hitCheck(Player* otherPlayer, int coordinate[]);
     bool guessCheck(int coordinate[]);
 };
@@ -49,7 +49,7 @@ private:
     string difficulty;
 public:
     Ship* createShip(int shipNumber, int length, map* map);
-    void takeTurn(map enemyShipMap);
+    bool takeTurn(map enemyShipMap);
     void getName();
     void setDifficulty(string difficulty);
 };
@@ -64,8 +64,11 @@ void placeShip(Ship *ship, map *shipMap, char counter);
 char printMenu();
 bool validateInput(char playerOption);
 void startGame(Player* p2);
+void startGameAI(Player* p2);
 void showCredits();
 int showSubMenu();
+void clearScreen();
+bool endGame(Player* winner);
 
 
 /*
@@ -92,5 +95,7 @@ int showSubMenu();
  down
  f1
  down
+ 
+ 
  
  */

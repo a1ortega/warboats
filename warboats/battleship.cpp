@@ -12,9 +12,7 @@
 
 /*
  LATEST CHANGES: Evan Waxman - 4/15/17
- 1. Implemented Marcus's showSubMenu() function.
- 2. Cleaned up code, made it more organized.
- 3. Got rid/commented out excess code.
+ 1. Used Marcus's show
  */
 
 
@@ -43,7 +41,6 @@ int main() {
             }
                 break;
             case '2':{
-                cout << "\nFor best gameplay, configure terminal window with a max height of 125." << endl << endl;
                 Player *p2 = new Player();
                 startGame(p2);
             }
@@ -302,60 +299,94 @@ void startGame(Player* p2) {
     
     //int turn = 1;
     bool gameOver = false;
-    //int turnRand = rand()%2;
-    int turn = 0;
+    bool turn = false;
+    
+    /****************************
+     ****************************/
+    /*
+     int selection;
+     bool validSelection = true;
+     cout << p1->name << " how do you want to set your ships?" << endl;
+     cout << "1. Manual setup" << endl;
+     cout << "2. Auto setup" << endl;
+     cin >> selection;
+     while(validSelection) {
+     switch (selection) {
+     case 1:
+     cout << endl << "Player 1 Enter Ships: " << endl;
+     p1->initializeShips();
+     clearScreen();
+     break;
+     case 2:
+     
+     default:
+     cout << "Invalid selection, try again." << endl << endl;
+     cout << p1->name << " how do you want to set your ships?" << endl;
+     cout << "1. Manual setup" << endl;
+     cout << "2. Auto setup" << endl;
+     cin >> selection;
+     break;
+     }
+     }
+     */
+    /****************************
+     ****************************/
     
     printMap(*p1);
     
     cout << endl << "Player 1 Enter Ships: " << endl;
     p1->initializeShips();
+    clearScreen();
     
     cout << endl << endl << "Player 2 Enter Ships: " << endl;
     p2->initializeShips();
+    clearScreen();
     
-    cout << endl << endl << "Battle to the death. Go!" << endl;
+    cout << endl << endl << "BATTLE TO THE DEATH GO!" << endl;
     while(!gameOver){
-        if(turn == 0){  //p1 turn
+        if(turn == false){  //p1 turn
             cout << "\n" << p1->name << " make your move." << endl;
             switch (showSubMenu()) {
                 case 1:
                     printMap(*p1);
-                    p1->takeTurn(p2);
                     break;
                 case 2:
-                    p1->takeTurn(p2);
+                    if(!p1->takeTurn(p2)) {
+                        gameOver = endGame(p2);
+                    }
+                    turn = true;
                     break;
                 case 3:
                     cout << "Thanks for playing Warboats!" << endl;
+                    gameOver = endGame(p2);
                     exit(9);
                     break;
                 default:
                     cout << "Invalid selection, try again." << endl;
-                    turn--;
                     break;
             }
-            turn++;
         }
         else{               //AIturn
             cout << "\n" << p2->name << " make your move." << endl;
             switch (showSubMenu()) {
                 case 1:
                     printMap(*p2);
-                    p2->takeTurn(p1);
                     break;
                 case 2:
-                    p2->takeTurn(p1);
+                    if(!p2->takeTurn(p1)) {
+                        gameOver = endGame(p1);
+                    }
+                    turn = false;
                     break;
                 case 3:
                     cout << "Thanks for playing Warboats!" << endl;
+                    gameOver = endGame(p1);
                     exit(9);
                     break;
                 default:
                     cout << "Invalid selection, try again." << endl;
-                    turn--;
                     break;
             }
-            turn--;
         }
     }
 } //end of 2P game
@@ -388,6 +419,10 @@ int showSubMenu() {
         selection = showSubMenu();
     }
     return selection;
+}
+
+void clearScreen() {
+    cout << string(100, '\n');
 }
 
 void startGameAI(Player* p2) {
@@ -425,7 +460,11 @@ void startGameAI(Player* p2) {
     
 } //end of 1P game
 
-
+bool endGame(Player* winner) {
+    cout << winner->name << " wins!" << endl;
+    cout << "Returning to main menu..." << endl;
+    return true;
+}
 
 
 /*******************/
@@ -576,7 +615,7 @@ void Player::initializeShips() {
  }
  */
 
-void Player::takeTurn(Player* otherPlayer) {
+bool Player::takeTurn(Player* otherPlayer) {
     /* CHANGELOG
      Added the small while loop at line 242 to ensure that the length is not below 2 before it separates the components of the string
      */
@@ -633,10 +672,13 @@ void Player::takeTurn(Player* otherPlayer) {
     coordinate[0] = row - 0x30;
     
     if(otherPlayer->hitCheck(this, coordinate)) {
-        cout << "You missed :'(" << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl;
+        clearScreen();
+        cout << "You missed :'(" << endl;
     }else {
-        cout << "YOU GOT A HIT!!" << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl;
+        clearScreen();
+        cout << "YOU GOT A HIT!!" << endl;
     }
+    return true;
 }
 
 
@@ -647,6 +689,26 @@ void Player::getName() {
     cin >> name;
 }
 
+// Checks if coordinate was already guessed
+bool Player::guessCheck(int coordinate[]) {
+    if(guessMap.mapArray[coordinate[0]][coordinate[1]] == 'X' || guessMap.mapArray[coordinate[0]][coordinate[1]] == 'O') {    // Only other values for guess map
+        return true;
+    }else {
+        return false;
+    }
+}
+
+// Checks if ship was hit
+bool Player::hitCheck(Player* otherPlayer, int coordinate[2]) {
+    if(this->shipMap.mapArray[coordinate[0]][coordinate[1]] == '~'){
+        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'O';     // Update guess map
+        return true;
+    }else {
+        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'X';     // Update guess map
+        shipMap.mapArray[coordinate[0]][coordinate[1]] =  'X';
+        return false;
+    }
+}
 
 /*******************/
 /**   AI CLASS   **/
@@ -972,28 +1034,6 @@ map::map() {
     }
 }
 
-// Checks if coordinate was already guessed
-bool Player::guessCheck(int coordinate[]) {
-    if(guessMap.mapArray[coordinate[0]][coordinate[1]] == 'X' || guessMap.mapArray[coordinate[0]][coordinate[1]] == 'O') {    // Only other values for guess map
-        return true;
-    }else {
-        return false;
-    }
-}
-
-// Checks if ship was hit
-bool Player::hitCheck(Player* otherPlayer, int coordinate[2]) {
-    if(this->shipMap.mapArray[coordinate[0]][coordinate[1]] == '~'){
-        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'O';     // Update guess map
-        return true;
-    }else {
-        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'X';     // Update guess map
-        shipMap.mapArray[coordinate[0]][coordinate[1]] =  'X';
-        return false;
-    }
-}
-
-
 
 /*******************/
 /**  SHIP CLASS  **/
@@ -1064,7 +1104,7 @@ Ship::Ship(int shipNumber, string position, int l, string orientation)
 //Method that attempts to shoot a ship at a given coordinate
 bool Ship::shot(string coord)
 {
-    //Searches through the all of the ship coordinates of the class
+    //Searches through the all of theclear ship coordinates of the class
     for(int i = 0; i < length; i++)
     {
         //Compares the coordinates that are being shot with those of where the ship is located
@@ -1097,7 +1137,3 @@ bool Ship::isAlive()
     else
         return true;
 }
-
-
-
-
