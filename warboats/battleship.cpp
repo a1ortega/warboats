@@ -407,20 +407,40 @@ void showCredits() {
 
 //
 int showSubMenu() {
-    int selection;
+    bool goodInput = false;
+    int selection = 0;
+    string temp = "";
     
-    cout << "1. Show Map" << endl;
-    cout << "2. Take Turn" << endl;
-    cout << "3. Give Up" << endl;
-    cin >> selection;
-    cout << endl;
-    if(selection < 1 || selection > 3) {
-        cout << "Invalid selection!" << endl;
-        selection = showSubMenu();
+    while (!goodInput) {
+        
+        selection = 0;
+        temp = "";
+        cout << "1. Show Map" << endl;
+        cout << "2. Take Turn" << endl;
+        cout << "3. Give Up" << endl;
+        cin >> temp;
+        cout << endl;
+        if (temp.length() < 1 || temp.length() > 1) {
+            cout << "Invalid selection! (Input too long)" << endl;
+            continue;
+        }
+        if(isalpha(temp.at(0))) {
+            cout << "Invalid selection! (Input was a letter) " << endl;
+            continue;
+        }
+        else {
+            selection = atoi(&temp.at(0));
+        }
+        if(selection < 1 || selection > 3) {
+            cout << "Invalid selection! (Input was a number out of the range)" << endl;
+            continue;
+        }
+        else {
+            goodInput = true;
+        }
     }
     return selection;
 }
-
 void clearScreen() {
     cout << string(100, '\n');
 }
