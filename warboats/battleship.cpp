@@ -13,6 +13,9 @@
 /*
  LATEST CHANGES: Evan Waxman - 4/15/17
  1. Used Marcus's show
+ 
+ Julian Showen - 4/15/17 5:15 PM
+ - Changed the takeTurn and checkCoordinate function to fix bugs where entering coordinates outside of the range wouldn't register as outside and mess other stuff up
  */
 
 
@@ -243,6 +246,20 @@ void printMap(Player p1) {
 }
 
 //
+void sinkShip(Ship *ship, map *shipMap) {
+    int coordinate[2];
+    for(int i=0; i<ship->length; i++) {
+        coordinate[1] = toupper(ship->chunk[i].at(0)) - 0x41;   // First argument must be a char A-J. Subtract
+        // 0x41 to get int value for array indexing.
+        // Refer to ASCII table.
+        coordinate[0] = ship->chunk[i].at(1) - 0x30;    // Second argument must be a char 1-10. Subtract
+        // 0x31 to get int value for array indexing.
+        // Refer to ASCII table.
+        shipMap->mapArray[coordinate[0]][coordinate[1]] = '*';
+    }
+}
+
+//
 void placeShip(Ship *ship, map *shipMap, char counter) {
     int coordinate[2];
     for(int i=0; i<ship->length; i++) {
@@ -301,46 +318,61 @@ void startGame(Player* p2) {
     bool gameOver = false;
     bool turn = false;
     
-    /****************************
-     ****************************/
-    /*
-     int selection;
-     bool validSelection = true;
-     cout << p1->name << " how do you want to set your ships?" << endl;
-     cout << "1. Manual setup" << endl;
-     cout << "2. Auto setup" << endl;
-     cin >> selection;
-     while(validSelection) {
-     switch (selection) {
-     case 1:
-     cout << endl << "Player 1 Enter Ships: " << endl;
-     p1->initializeShips();
-     clearScreen();
-     break;
-     case 2:
-     
-     default:
-     cout << "Invalid selection, try again." << endl << endl;
-     cout << p1->name << " how do you want to set your ships?" << endl;
-     cout << "1. Manual setup" << endl;
-     cout << "2. Auto setup" << endl;
-     cin >> selection;
-     break;
-     }
-     }
-     */
-    /****************************
-     ****************************/
-    
-    printMap(*p1);
-    
-    cout << endl << "Player 1 Enter Ships: " << endl;
-    p1->initializeShips();
-    clearScreen();
-    
-    cout << endl << endl << "Player 2 Enter Ships: " << endl;
-    p2->initializeShips();
-    clearScreen();
+    char selection;
+    bool validSelection = true;
+    cout << p1->name << " how do you want to set your ships?" << endl;
+    cout << "1. Manual setup" << endl;
+    cout << "2. Auto setup" << endl;
+    cin >> selection;
+    while(validSelection) {
+        switch (selection) {
+            case '1':
+                printMap(*p1);
+                cout << endl << "Player 1 Enter Ships: " << endl;
+                p1->initializeShips();
+                clearScreen();
+                validSelection = false;
+                break;
+            case '2':
+                p1->autoInitializeShips();
+                validSelection = false;
+                break;
+            default:
+                cout << "Invalid selection, try again." << endl << endl;
+                cout << p1->name << " how do you want to set your ships?" << endl;
+                cout << "1. Manual setup" << endl;
+                cout << "2. Auto setup" << endl;
+                cin >> selection;
+                break;
+        }
+    }
+    validSelection = true;
+    cout << p2->name << " how do you want to set your ships?" << endl;
+    cout << "1. Manual setup" << endl;
+    cout << "2. Auto setup" << endl;
+    cin >> selection;
+    while(validSelection) {
+        switch (selection) {
+            case '1':
+                printMap(*p2);
+                cout << endl << "Player 2 Enter Ships: " << endl;
+                p2->initializeShips();
+                clearScreen();
+                validSelection = false;
+                break;
+            case '2':
+                p2->autoInitializeShips();
+                validSelection = false;
+                break;
+            default:
+                cout << "Invalid selection, try again." << endl << endl;
+                cout << p2->name << " how do you want to set your ships?" << endl;
+                cout << "1. Manual setup" << endl;
+                cout << "2. Auto setup" << endl;
+                cin >> selection;
+                break;
+        }
+    }
     
     cout << endl << endl << "BATTLE TO THE DEATH GO!" << endl;
     while(!gameOver){
@@ -441,6 +473,7 @@ int showSubMenu() {
     }
     return selection;
 }
+
 void clearScreen() {
     cout << string(100, '\n');
 }
@@ -492,7 +525,7 @@ bool endGame(Player* winner) {
 /*******************/
 
 //
-Ship* Player::createShip(int shipNumber, int length, map* map) { //Allows user to input ship and checks input
+void Player::playerCreateShip(int shipNumber, int length, map* map) { //Allows user to input ship and checks input
     /* CHANGELOG
      Added in the initial check for whether or not the position is of the right length. (This relenvace of this mainly being
      because a position with length 1 will crash the program out of terminal) After this, it goes through ahd verifies other stipulations
@@ -581,66 +614,167 @@ Ship* Player::createShip(int shipNumber, int length, map* map) { //Allows user t
         
     }
     
-    switch (shipNumber) {
+    ship[shipNumber-1] = new Ship(shipNumber, position, length, orientation);
+    placeShip(ship[shipNumber-1], map, shipNumber);
+    
+}
+
+void Player::autoCreateShip(int shipNumber, int length, map* map) {
+    srand((unsigned)time(0));
+    int randX = rand() % 9 +1;
+    int randY = rand() % 9 +1;
+    int randPos = rand() % 3 +1;
+    
+    
+    //DEBUG
+    //cout << "pos: " << randX << randY << "dir: " << randPos << endl;
+    
+    
+    string orientation = "up";
+    string cord = "";
+    switch (randPos) {
+        case 0:
+            orientation = "up";
+            break;
         case 1:
-            ship1 = new Ship(shipNumber, position, length, orientation);
-            placeShip(ship1, map, shipNumber);
-            return ship1;
+            orientation = "down";
             break;
         case 2:
-            ship2 = new Ship(shipNumber, position, length, orientation);
-            placeShip(ship2, map, shipNumber);
-            return ship2;
+            orientation = "left";
             break;
         case 3:
-            ship3 = new Ship(shipNumber, position, length, orientation);
-            placeShip(ship3, map, shipNumber);
-            return ship3;
-            break;
-        case 4:
-            ship4 = new Ship(shipNumber, position, length, orientation);
-            placeShip(ship4, map, shipNumber);
-            return ship4;
-            break;
-        case 5:
-            ship5 = new Ship(shipNumber, position, length, orientation);
-            placeShip(ship5, map, shipNumber);
-            return ship5;
+            orientation = "right";
             break;
         default:
-            return ship1;
             break;
     }
+    switch (randX) {
+        case 0:
+            cord = "A";
+            break;
+        case 1:
+            cord = "B";
+            break;
+        case 2:
+            cord = "C";
+            break;
+        case 3:
+            cord = "D";
+            break;
+        case 4:
+            cord = "E";
+            break;
+        case 5:
+            cord = "F";
+            break;
+        case 6:
+            cord = "G";
+            break;
+        case 7:
+            cord = "H";
+        case 8:
+            cord = "I";
+            break;
+        case 9:
+            cord = "J";
+            break;
+        default:
+            break;
+    }
+    
+    
+    
+    cord += to_string(randY);
+    
+    //DEBUG
+    //cout << "cord: " << cord << "orientation: " << orientation;
+    
+    while(intersectionCheck(cord, orientation, length, map) || boundaryCheck(cord, orientation, length)){
+        int randX = rand() % 9 +1;
+        int randY = rand() % 9 +1;
+        int randPos = rand() % 3 +1;
+        
+        switch (randPos) {
+            case 0:
+                orientation = "up";
+                break;
+            case 1:
+                orientation = "down";
+                break;
+            case 2:
+                orientation = "left";
+                break;
+            case 3:
+                orientation = "right";
+                break;
+            default:
+                break;
+        }
+        switch (randX) {
+            case 0:
+                cord = "A";
+                break;
+            case 1:
+                cord = "B";
+                break;
+            case 2:
+                cord = "C";
+                break;
+            case 3:
+                cord = "D";
+                break;
+            case 4:
+                cord = "E";
+                break;
+            case 5:
+                cord = "F";
+                break;
+            case 6:
+                cord = "G";
+                break;
+            case 7:
+                cord = "H";
+            case 8:
+                cord = "I";
+                break;
+            case 9:
+                cord = "J";
+                break;
+            default:
+                break;
+        }
+        cord += to_string(randY);
+    }
+    
+    ship[shipNumber-1] = new Ship(shipNumber, cord, length, orientation);
+    placeShip(ship[shipNumber-1], map, shipNumber);
+    
 }
 
 //Allows each player to individually place their ships
 void Player::initializeShips() {
     int sizeArray[5] = {2, 3, 3, 4, 5};
     for(int i = 1; i < 6; i++) {
-        createShip(i, sizeArray[i-1], &shipMap);
+        playerCreateShip(i, sizeArray[i-1], &shipMap);
         printMap(*this);
     }
 }
 
-
-/* void Player::placeShips(Player player, map playerShipMap) {
- for(int i=1; i<6; i++) {
- player1.createShip(i, sizeArray[i-1], &player1ships);
- printMap(&player1ships, &player1guesses);
- }
- for(int i=1; i<6; i++) {
- player2.createShip(i, sizeArray[i-1], &player2ships);
- printMap(&player2ships, &player2guesses);
- }
- }
- */
+void Player::autoInitializeShips() {
+    int sizeArray[5] = {2, 3, 3, 4, 5};
+    for(int i = 1; i < 6; i++) {
+        autoCreateShip(i, sizeArray[i-1], &shipMap);
+        //printMap(*this);
+    }
+}
 
 bool Player::takeTurn(Player* otherPlayer) {
+    int hit;
     /* CHANGELOG
      Added the small while loop at line 242 to ensure that the length is not below 2 before it separates the components of the string
+     Changed the While loop at 671 to fix guessCheck issues
      */
     
-    //printMap(*this);
     cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
     
     string position;
@@ -648,21 +782,32 @@ bool Player::takeTurn(Player* otherPlayer) {
     
     int coordinate[2];
     char column, row;
-    while (position.length() < 2) {
+    
+    while (position.size() < 2) {
         if (position.length() < 2) {
             cout << "Coordinate too short. Enter a coordinate to guess (ex: 'D7'):" << endl;
             cin >> position;
             continue;
         }
     }
+    
     column = position.at(0);
     row = position.at(1);
     
-    while(position.length() > 2) {
-        cout << "Coordinate too long. Enter a coordinate to guess (ex: 'D7'):" << endl;
-        cin >> position;
+    while (position.length() != 2 || coordinateCheck(position) == true || this->guessCheck(position) == true) {
         
-        while(coordinateCheck(position) == true){
+        if (position.length() < 2) {
+            cout << "Coordinate too short. Enter a coordinate to guess (ex: 'D7'):" << endl;
+            cin >> position;
+            continue;
+        }
+        
+        else if (position.length() > 2) {
+            cout << "Coordinate too long. Enter a coordinate to guess (ex: 'D7'):" << endl;
+            cin >> position;
+        }
+        
+        else if (coordinateCheck(position) == true) {
             cout << "Coordinate not in range." << endl;
             
             cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
@@ -670,18 +815,19 @@ bool Player::takeTurn(Player* otherPlayer) {
             
             column = position.at(0);
             row = position.at(1);
-            
-            //Sets the positions of the coordinate
-            coordinate[1] = toupper(column) - 0x41;
-            coordinate[0] = row - 0x30;
-            
-            while (this->guessCheck(coordinate) == true){
-                cout << "This coordinate has already been checked." << endl;
-                cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
-                
-                cin >> position;
-            }
         }
+        
+        else if (this->guessCheck(position) == true) {
+            cout << "This coordinate has already been checked." << endl;
+            cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
+            
+            cin >> position;
+        }
+        
+        else {
+            break;
+        }
+        
     }
     
     column = position.at(0);
@@ -691,12 +837,23 @@ bool Player::takeTurn(Player* otherPlayer) {
     coordinate[1] = toupper(column) - 0x41;
     coordinate[0] = row - 0x30;
     
-    if(otherPlayer->hitCheck(this, coordinate)) {
+    hit = otherPlayer->hitCheck(this, coordinate);
+    
+    if (hit == 0) {
         clearScreen();
         cout << "You missed :'(" << endl;
-    }else {
+    }
+    else if (hit == 1) {
         clearScreen();
-        cout << "YOU GOT A HIT!!" << endl;
+        cout << "You got a hit!" << endl;
+    }
+    else if (hit == 2) {
+        clearScreen();
+        cout << "YOU SUNK A BATTLESHIP!!" << endl;
+    }
+    else if (hit == 3) {
+        clearScreen();
+        cout << "YOU WIN!!!" << endl;
     }
     return true;
 }
@@ -704,29 +861,62 @@ bool Player::takeTurn(Player* otherPlayer) {
 
 //Method to get player name from console
 void Player::getName() {
-    
     cout << "Enter your name: " << endl;
+    string placeholder;
     cin >> name;
+    std::getline(cin, placeholder);
+    name = name + placeholder;
 }
 
 // Checks if coordinate was already guessed
-bool Player::guessCheck(int coordinate[]) {
-    if(guessMap.mapArray[coordinate[0]][coordinate[1]] == 'X' || guessMap.mapArray[coordinate[0]][coordinate[1]] == 'O') {    // Only other values for guess map
+bool Player::guessCheck(string position) {
+    
+    int column = position.at(0);
+    int row = position.at(1);
+    //Sets the positions of the coordinate
+    int coordinate[2];
+    coordinate[1] = toupper(column) - 0x41;
+    coordinate[0] = row - 0x30;
+    
+    if (guessMap.mapArray[coordinate[0]][coordinate[1]] == 'X' || guessMap.mapArray[coordinate[0]][coordinate[1]] == 'O') {    // Only other values for guess map
         return true;
-    }else {
+    }
+    else {
         return false;
     }
 }
 
 // Checks if ship was hit
-bool Player::hitCheck(Player* otherPlayer, int coordinate[2]) {
-    if(this->shipMap.mapArray[coordinate[0]][coordinate[1]] == '~'){
-        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'O';     // Update guess map
-        return true;
-    }else {
+int Player::hitCheck(Player* otherPlayer, int coordinate[2]) {
+    char shot = shipMap.mapArray[coordinate[0]][coordinate[1]];
+    bool hasShips = false;
+    if (shot == '1' || shot == '2' || shot == '3' || shot == '4' || shot == '5') {
         otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'X';     // Update guess map
-        shipMap.mapArray[coordinate[0]][coordinate[1]] =  'X';
-        return false;
+        shipMap.mapArray[coordinate[0]][coordinate[1]] = 'X';   // Update guess map
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                char tempPos = shipMap.mapArray[i][j];
+                if (tempPos == shot) {
+                    return 1; //1 corresponds to hit but not sunk
+                }
+                if (tempPos == '1' || tempPos == '2' || tempPos == '3' || tempPos == '4' || tempPos == '5') {
+                    hasShips = true;
+                }
+            }
+        }
+        if (hasShips) {
+            int intShot = (int) shot - 49; //get rid of ascii value
+            sinkShip(ship[intShot], &shipMap);
+            return 2; //sunk
+        }
+        else {
+            return 3; //no more ships (game over)
+        }
+        
+    }
+    else {
+        otherPlayer->guessMap.mapArray[coordinate[0]][coordinate[1]] = 'O';
+        return 0;
     }
 }
 
@@ -735,7 +925,7 @@ bool Player::hitCheck(Player* otherPlayer, int coordinate[2]) {
 /*******************/
 
 //Allows AI to auto place ships
-Ship* AI::createShip(int shipNumber, int length, map* map) {
+Ship* AI::aiCreateShip(int shipNumber, int length, map* map) {
     
     int randX = rand() % 9 +1;
     int randY = rand() % 9 +1;

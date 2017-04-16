@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
@@ -20,36 +22,33 @@ public:
     map();
     const static int size = 10;     // Size won't ever change
     //void printMap(map *player1ships, map *player1guesses);
-    void placeShip(Ship *ship, map *shipMap, char counter);
     char mapArray[10][10];
 };
 
 class Player {
 public:
-    Ship* ship1;
-    Ship* ship2;
-    Ship* ship3;
-    Ship* ship4;
-    Ship* ship5;
+    Ship* ship[5];
     map shipMap;
     map guessMap;
     string name;
     int getGuessX();
     int getGuessY();
     void getName();
-    Ship* createShip(int shipNumber, int length, map* map);
+    void playerCreateShip(int shipNumber, int length, map* map);
+    void autoCreateShip(int shipNumber, int length, map* map);
     void initializeShips();
+    void autoInitializeShips();
     bool takeTurn(Player* otherPlayer);
-    bool hitCheck(Player* otherPlayer, int coordinate[]);
-    bool guessCheck(int coordinate[]);
+    int hitCheck(Player* otherPlayer, int coordinate[]);
+    bool guessCheck(string position);
 };
 
 class AI: public Player{
 private:
     string difficulty;
 public:
-    Ship* createShip(int shipNumber, int length, map* map);
-    bool takeTurn(map enemyShipMap);
+    Ship* aiCreateShip(int shipNumber, int length, map* map);
+    void takeTurn(map enemyShipMap);
     void getName();
     void setDifficulty(string difficulty);
 };
@@ -61,6 +60,7 @@ bool boundaryCheck(string position, string orientation, int length);
 //int* generateGuess(string difficulty, char** guessMap);
 void printMap(Player p1);
 void placeShip(Ship *ship, map *shipMap, char counter);
+void sinkShip(Ship *ship, map *shipMap);
 char printMenu();
 bool validateInput(char playerOption);
 void startGame(Player* p2);
@@ -69,33 +69,3 @@ void showCredits();
 int showSubMenu();
 void clearScreen();
 bool endGame(Player* winner);
-
-
-/*
- 2
- Evan
- Computer
- a1
- down
- b1
- down
- c1
- down
- d1
- down
- e1
- down
- j1
- down
- i1
- down
- h1
- down
- g1
- down
- f1
- down
- 
- 
- 
- */
