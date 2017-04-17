@@ -11,7 +11,9 @@
 
 /*
  LATEST CHANGES:
- -Evan Waxman - changed the AI::TakeTurn and startGameAI methods
+ 4-16-17 18:53
+ Adam: In the Player::startGame, I added a clearScreen for after the first and second players input their ships so that the
+ maps do not show the next player what the other player's final map ended up being.
  */
 
 
@@ -246,11 +248,31 @@ void printMap(Player p1) {
     for (int i = 0; i < p1.guessMap.size; i++) {
         cout << row_count << "  ";
         for (int j = 0; j < p1.guessMap.size; j++) {
-            cout << p1.shipMap.mapArray[i][j] << " " ;
+            if(p1.shipMap.mapArray[i][j] == '~') {
+                cout << BOLDBLUE << p1.shipMap.mapArray[i][j] << RESET << " " ;
+            }else if(p1.shipMap.mapArray[i][j] == 'X') {
+                cout << RED << p1.shipMap.mapArray[i][j] << RESET << " " ;
+            }else if(p1.shipMap.mapArray[i][j] == '*') {
+                cout << BOLDRED << p1.shipMap.mapArray[i][j] << RESET << " " ;
+            }else if(p1.shipMap.mapArray[i][j] == 'O') {
+                cout << p1.shipMap.mapArray[i][j] << " " ;
+            }else {
+                cout << GREEN << p1.shipMap.mapArray[i][j] << RESET << " " ;
+            }
         }
         cout << " ";
         for(int j=0; j< p1.guessMap.size; j++){
-            cout << p1.guessMap.mapArray[i][j]<< " ";
+            if(p1.guessMap.mapArray[i][j] == '~') {
+                cout << BOLDBLUE << p1.guessMap.mapArray[i][j] << RESET << " " ;
+            }else if(p1.guessMap.mapArray[i][j] == 'X') {
+                cout << RED << p1.guessMap.mapArray[i][j] << RESET << " " ;
+            }else if(p1.guessMap.mapArray[i][j] == '*') {
+                cout << BOLDRED << p1.guessMap.mapArray[i][j] << RESET << " " ;
+            }else if(p1.guessMap.mapArray[i][j] == 'O') {
+                cout << p1.guessMap.mapArray[i][j] << " " ;
+            }else {
+                cout << GREEN << p1.guessMap.mapArray[i][j] << RESET << " " ;
+            }
         }
         cout << endl;
         row_count++;
@@ -373,14 +395,18 @@ void startGame(Player* p2) {
                 break;
         }
     }
-    //Queries player 2 for how they want to enter their ships
+    //Queries player 2 for how they want to enter their ships and also clears the screen between inputs so the maps are not shown
     validSelection = true;
+    clearScreen();
+    cout << p1->name << ", pass the computer to the other player!" << endl;
+    cout << endl;
     cout << "1. Manual setup" << endl;
     cout << "2. Auto setup" << endl;
     cout << endl;
     cout << p2->name << ", how do you want to set your ships?" << endl;
     cin >> selection;
     cout << endl;
+    clearScreen();
     while(validSelection) {
         switch (selection) {
                 //Player 2 places their ships manually
@@ -420,7 +446,7 @@ void startGame(Player* p2) {
                 case 1:
                     printMap(*p1);
                     break;
-                    //Lets the player gues
+                    //Lets the player guess
                 case 2:
                     if(!p1->takeTurn(p2)) {
                         gameOver = endGame(p1, p2turnsElapsed);
@@ -430,9 +456,7 @@ void startGame(Player* p2) {
                     break;
                     //Concedes the game
                 case 3:
-                    cout << "Thanks for playing Warboats!" << endl;
                     gameOver = endGame(p2, p2turnsElapsed);
-                    exit(9);
                     break;
                     //Queries the user for valid input
                 default:
@@ -442,10 +466,13 @@ void startGame(Player* p2) {
         }
         else{               //AIturn
             cout << "\nTurn " << p2turnsElapsed << ": " << p2->name << " make your move." << endl;
+            //Prints the turn menu, asking whether the player wants to display the map, take their turn, or concede the game
             switch (showSubMenu()) {
+                    //Prints the players map
                 case 1:
                     printMap(*p2);
                     break;
+                    //Lets the player gues
                 case 2:
                     if(!p2->takeTurn(p1)) {
                         gameOver = endGame(p2, p1turnsElapsed);
@@ -453,11 +480,11 @@ void startGame(Player* p2) {
                     turn = false;
                     p2turnsElapsed++;
                     break;
+                    //Concedes the game
                 case 3:
-                    cout << "Thanks for playing Warboats!" << endl;
                     gameOver = endGame(p1, p1turnsElapsed);
-                    exit(9);
                     break;
+                    //Queries the user for valid input
                 default:
                     cout << "Invalid selection, try again." << endl;
                     break;
@@ -466,7 +493,7 @@ void startGame(Player* p2) {
     }
 } //end of 2P game
 
-//
+//Prints the credits from the main menu
 void showCredits() {
     cout << endl;
     cout << "Warboats contributors:" << endl;
@@ -476,16 +503,18 @@ void showCredits() {
     cout << "Adam Hochberger" << endl;
     cout << "Victor Fan" << endl;
     cout << "Andrew Showen" << endl;
+    cout << "Connor Watson" << endl;
     cout << "Snoop Dogg" << endl;
     cout << endl;
 }
 
-//
+//Prints the in game turn menu and returns the users selection
 int showSubMenu() {
     bool goodInput = false;
     int selection = 0;
     string temp = "";
     
+    //While the user has not entered valid input
     while (!goodInput) {
         
         selection = 0;
@@ -495,6 +524,7 @@ int showSubMenu() {
         cout << "3. Give Up" << endl;
         cin >> temp;
         cout << endl;
+        //Queries the user to enter valid input
         if (temp.length() < 1 || temp.length() > 1) {
             cout << "Invalid selection! (Input too long)" << endl;
             continue;
@@ -516,30 +546,40 @@ int showSubMenu() {
     }
     return selection;
 }
+
+//Clears screen in terminal window
 void clearScreen() {
-    //cout << string(100, '\n');
+    cout << string(100, '\n');
 }
 
+//Main game function for a singleplayer game against the AI
 void startGameAI(AI* p2) {
     
+    //Creates a new human player object for player 1 and sets the players names
     Player* p1 = new Player();
     p1->getName();
     p2->getName();
     
+    //Variables for keeping track of the turns
     int turnsElapsed = 1;
     bool gameOver = false;
     bool turn = false;
     
+    //Variables for input validation
     char selection;
     bool validSelection = true;
+    
+    //Queries the player for how they want to set up their ships
     cout << "1. Manual setup" << endl;
     cout << "2. Auto setup" << endl;
     cout << endl;
     cout << p1->name << ", how do you want to set your ships?" << endl;
     cin >> selection;
     cout << endl;
+    //While input is valid
     while(validSelection) {
         switch (selection) {
+                //Player places their ships manually
             case '1':
                 printMap(*p1);
                 cout << endl << "Player 1 Enter Ships: " << endl;
@@ -547,10 +587,12 @@ void startGameAI(AI* p2) {
                 clearScreen();
                 validSelection = false;
                 break;
+                //Player has their ships placed automatically
             case '2':
                 p1->autoInitializeShips();
                 validSelection = false;
                 break;
+                //Queries the user to reenter input after bad input
             default:
                 cout << "Invalid selection, try again." << endl << endl;
                 cout << p1->name << " how do you want to set your ships?" << endl;
@@ -562,16 +604,22 @@ void startGameAI(AI* p2) {
         }
     }
     
+    //Places ships for the AI
     p2->initializeAIShips();
     
+    //Main Game Loop
     cout << endl << endl << "BATTLE TO THE DEATH GO!" << endl;
+    //While the game has not ended
     while(!gameOver){
+        //Prints the turn menu to the player
         if(turn == false){  //p1 turn
             cout << "\nTurn " << turnsElapsed << ": " << p1->name << " make your move." << endl;
             switch (showSubMenu()) {
+                    //Prints the players map
                 case 1:
                     printMap(*p1);
                     break;
+                    //Lets the player guess
                 case 2:
                     if(!p1->takeTurn(p2)) {
                         gameOver = endGame(p1, turnsElapsed);
@@ -579,15 +627,16 @@ void startGameAI(AI* p2) {
                     turn = true;
                     turnsElapsed++;
                     break;
+                    //Player concedes the game
                 case 3:
-                    cout << "Thanks for playing Warboats!" << endl;
                     gameOver = endGame(p2, turnsElapsed);
-                    exit(9);
                     break;
+                    //Has the player reenter after bad input
                 default:
                     cout << "Invalid selection, try again." << endl;
                     break;
             }
+            //If the AI is unable to take their turn the game is over
         }else {
             
             if (!p2->takeTurn(p1)) {
@@ -599,6 +648,7 @@ void startGameAI(AI* p2) {
     
 } //end of 1P game
 
+//Function to end the game
 bool endGame(Player* winner, int turnsElapsed) {
     cout << winner->name << " won in " << turnsElapsed << " turn(s)!" << endl;
     cout << "Returning to main menu..." << endl;
@@ -610,7 +660,7 @@ bool endGame(Player* winner, int turnsElapsed) {
 /** PLAYER CLASS **/
 /*******************/
 
-//
+//Function for letting the player place their ships
 void Player::createShip(int shipNumber, int length, map* map) { //Allows user to input ship and checks input
     /* CHANGELOG
      Added in the initial check for whether or not the position is of the right length. (This relenvace of this mainly being
@@ -618,11 +668,13 @@ void Player::createShip(int shipNumber, int length, map* map) { //Allows user to
      of the coordinateCheck method. If it does fail, it outputs what the problem was to the user and continues to take input
      */
     
+    //Queries the player for location and orientation of ship
     cout << "What position do you want to put your " << length <<" length ship at? (enter a capital letter and a digit ex: D7): "<< endl;
     string position;
     cin >> position;
     cout << endl;
     
+    //Checks for invalid input
     while(position.length() > 2 || position.length() < 2 || coordinateCheck(position)) {
         int coordinate[2];
         char column, row;
@@ -666,6 +718,7 @@ void Player::createShip(int shipNumber, int length, map* map) { //Allows user to
     cin >> orientation;
     cout << endl;
     
+    //Checks to make sure there is space to place the ship and queries the user to reenter if not
     while(orientation != "right" && orientation != "left" && orientation != "up" && orientation != "down") {
         cout << "Incorrect Orientation Input" << endl;
         
@@ -674,6 +727,7 @@ void Player::createShip(int shipNumber, int length, map* map) { //Allows user to
         cout << endl;
     }
     
+    //Makes sure the ship isnt outside of the map or overlapping with other ships and queries the user to reenter if there is collision
     while(intersectionCheck(position, orientation, length, map) || boundaryCheck(position, orientation, length)){
         if (boundaryCheck(position, orientation, length)) {
             cout << "Incorrect Placement (outside of map boundary)" << endl;
@@ -692,7 +746,7 @@ void Player::createShip(int shipNumber, int length, map* map) { //Allows user to
             cout << endl;
         }
         
-        //Coordinate check
+        //Coordinate check to make sure the ship is inside the map
         
         cout << "What orientation do you want to put your ship at? (up, down, left, right)" << endl;
         cin >> orientation;
@@ -708,6 +762,7 @@ void Player::createShip(int shipNumber, int length, map* map) { //Allows user to
         
     }
     
+    //Places the ship after all input is validated
     ship[shipNumber-1] = new Ship(shipNumber, position, length, orientation);
     placeShip(ship[shipNumber-1], map, shipNumber);
     
@@ -974,7 +1029,8 @@ bool Player::takeTurn(Player* otherPlayer) {
         
         //Secondary check for if the position length is going be less than 2 and with a reprompt for the user
         if (position.length() < 2) {
-            cout << "Coordinate too short. Enter a coordinate to guess (ex: 'D7'):" << endl;
+            cout << "Coordinate too short. " << endl;
+            cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
             cin >> position;
             cout << endl;
             continue;
@@ -982,7 +1038,8 @@ bool Player::takeTurn(Player* otherPlayer) {
         
         //Checks to see if the length of the string is greater than 2 (meaning that it is not a valid coordinate)
         else if (position.length() > 2) {
-            cout << "Coordinate too long. Enter a coordinate to guess (ex: 'D7'):" << endl;
+            cout << "Coordinate too long. " << endl;
+            cout << "Enter a coordinate to guess (ex: 'D7'):" << endl;
             cin >> position;
             cout << endl;
         }
@@ -1350,7 +1407,7 @@ void AI::setDifficulty(string difficulty) {
 //Method for the computer to 'take a turn' automatically
 bool AI::takeTurn(Player* p2) {
     int hit;
-    cout << "Computer's turn" << endl;
+    cout << name <<"'s turn" << endl;
     //printMap(*this);
     int guess[2];
     int coordinateX;
@@ -1532,21 +1589,23 @@ bool AI::takeTurn(Player* p2) {
 
 //Accesses a random name from a file called "names.txt"
 void AI::getName() {
-    srand(time(0));
+    srand((unsigned)time(0));
     string str;
     vector<string> names;
-    ifstream file("names.txt");
-    int randNum = rand() % (int)278;
+    ifstream infile;
+    char filename[10] = "names.txt";
+    infile.open(filename);
+    int randNum = rand() % 278;
     
-    if (file.is_open()) {
-        while(getline(file, str)) {
-            names.push_back(str);
+    if (infile.is_open()) {
+        while(getline(infile, str)) {
+            names.push_back(str.substr(0,str.size()-1));
         }
-        file.close();
+        infile.close();
         name = names.at(randNum);
     }
     else {
-        name = "Computer";
+        name = "Jonathan Liu";
     }
 }
 
